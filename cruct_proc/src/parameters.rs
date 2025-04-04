@@ -54,7 +54,7 @@ pub enum ParameterError {
 /// This struct represents a parsed
 /// version of the `cruct` macro
 /// parameters.
-struct MacroParameters {
+pub struct MacroParameters {
     /// A glob of the path that
     /// defines where the macro
     /// should be looking for
@@ -75,7 +75,7 @@ struct MacroParameters {
 /// the `MacroParameters` struct.
 ///
 /// **A parameter can only be found once.**
-struct FieldParameters {
+pub struct FieldParameters {
     /// A name override for the parameter.
     name: Option<String>,
 
@@ -121,12 +121,27 @@ impl Parse for MacroParameters {
                     });
                 },
 
-                ("path" | "format", value) => {
-                    Err(SynError::new_spanned(value, "Invalid value type"))?
+                (name @ ("path" | "format"), value) => {
+                    Err(SynError::new_spanned(
+                        value,
+                        format!(
+                            "Invalid value type for '{name}' expected '{}'",
+                            match name {
+                                "path" => "&str",
+                                "format" => "Json | Toml | Yml",
+                                _ => ""
+                            }
+                        )
+                    ))?
                 },
 
-                _ => {
-                    Err(SynError::new_spanned(param, "Unknown parameter"))?
+                (name, _) => {
+                    Err(SynError::new_spanned(
+                        param,
+                        format!(
+                            "Unknown parameter '{name}'. Known parameters include\n- path: &str\n- format: Json | Toml | Yml"
+                        ))
+                    )?
                 }
             };
         }
@@ -165,12 +180,28 @@ impl Parse for FieldParameters {
                     env_override = Some(value.value());
                 },
 
-                ("name" | "insensitive" | "env_override", value) => {
-                    Err(SynError::new_spanned(value, "Invalid value type"))?
+                (name @ ("name" | "insensitive" | "env_override"), value) => {
+                    Err(SynError::new_spanned(
+                        value,
+                        format!(
+                            "Invalid value type for '{name}' expected '{}'",
+                            match name {
+                                "name" => "&str",
+                                "insensitive" => "bool",
+                                "env_override" => "&str",
+                                _ => ""
+                            }
+                        )
+                    ))?
                 },
 
-                _ => {
-                    Err(SynError::new_spanned(param, "Unknown parameter"))?
+                (name, _) => {
+                    Err(SynError::new_spanned(
+                        param,
+                        format!(
+                            "Unknown parameter '{name}'. Known parameters include:\n- name: &str\n- insensitive: bool\n- env_override: &str"
+                        )
+                    ))?
                 }
             }
         }
