@@ -5,3 +5,11 @@ edition = "2024"
 
 [dependencies]
 cruct_proc = { path = "../cruct_proc" }
+cruct_shared = { path = "../cruct_shared" }
+
+thiserror = "2.0.12"
+
+# Parsers
+toml = "0.8.20"
+jzon = "0.12.5"
+yaml-rust2 = "0.10.1"

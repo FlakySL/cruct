@@ -1,19 +1,9 @@
+use cruct_shared::FileFormat;
 use quote::ToTokens;
-use syn::{Expr, ExprLit, Lit, MetaNameValue, Result as SynResult, Token, Error as SynError};
-use syn::punctuated::Punctuated;
 use syn::parse::{Parse, ParseStream};
+use syn::punctuated::Punctuated;
+use syn::{Error as SynError, Expr, ExprLit, Lit, MetaNameValue, Result as SynResult, Token};
 use thiserror::Error;
-
-/// This enum represents the available
-/// file formats for configuration parsing.
-pub enum FileFormat {
-    /// YML/YAML file format identifier.
-    Yml,
-    /// JSON file format idenitifer.
-    Json,
-    /// TOML file format identifier.
-    Toml
-}
 
 /// This enum is an error representation
 /// for parameter parsing. It implements
@@ -26,7 +16,7 @@ pub enum ParameterError {
     MissingRequired {
         /// The name of which parameter
         /// is missing.
-        name: String
+        name: String,
     },
 
     /// This error is used when a parameter
@@ -43,12 +33,14 @@ pub enum ParameterError {
 
         /// An identifier for the found
         /// type. (not enforced)
-        found: String
+        found: String,
     },
 
-    /// This error is used when the macro 
-    #[error("Couldn't infer the file type, please specify using `type = <type>` when invoking the macro")]
-    AmbiguousType
+    /// This error is used when the macro
+    #[error(
+        "Couldn't infer the file type, please specify using `type = <type>` when invoking the macro"
+    )]
+    AmbiguousFileType,
 }
 
 /// This struct represents a parsed
@@ -62,12 +54,12 @@ pub struct MacroParameters {
     ///
     /// **The query can only return
     /// one file**
-    path: String,
+    pub path: String,
 
     /// Which is the file format
     /// that should be used to
     /// parse the configuration file.
-    format: Option<FileFormat>
+    pub format: Option<FileFormat>,
 }
 
 /// This struct represents a specific
@@ -77,16 +69,18 @@ pub struct MacroParameters {
 /// **A parameter can only be found once.**
 pub struct FieldParameters {
     /// A name override for the parameter.
-    name: Option<String>,
+    pub name: Option<String>,
 
     /// Whether the parameter query
-    /// is case sensitive or insensitive.
-    insensitive: bool,
+    /// is case-sensitive or insensitive.
+    pub insensitive: bool,
 
     /// An environment variable name
     /// to replace or set the field if
     /// found.
-    env_override: Option<String>
+    pub env_override: Option<String>,
+
+    pub default: Option<String>,
 }
 
 impl Parse for MacroParameters {
@@ -97,58 +91,76 @@ impl Parse for MacroParameters {
         let mut format = None;
 
         for param in params {
-            let key = param
-                .path
-                .to_token_stream()
-                .to_string();
+            let key = param.path.to_token_stream().to_string();
 
             match (key.as_str(), &param.value) {
-                ("path", Expr::Lit(ExprLit { lit: Lit::Str(value), .. })) => {
+                (
+                    "path",
+                    Expr::Lit(ExprLit {
+                        lit: Lit::Str(value),
+                        ..
+                    }),
+                ) => {
                     path = Some(value.value());
-                },
+                }
 
-                ("format", Expr::Path(path)) => {
-                    let ident = path
-                        .to_token_stream()
-                        .to_string();
-
+                // ("format", Expr::Path(path)) => {
+                //     let ident = path.to_token_stream().to_string();
+                //
+                //     format = Some(match ident.as_str() {
+                //         "Yml" => FileFormat::Yml,
+                //         "Json" => FileFormat::Json,
+                //         "Toml" => FileFormat::Toml,
+                //
+                //         _ => Err(SynError::new_spanned(
+                //             path,
+                //             "Expected one of Yml, Json, Toml",
+                //         ))?,
+                //     });
+                // }
+                (
+                    "format",
+                    Expr::Lit(ExprLit {
+                        lit: Lit::Str(value),
+                        ..
+                    }),
+                ) => {
+                    let ident = value.value();
                     format = Some(match ident.as_str() {
-                        "Yml" => FileFormat::Yml,
+                        "Yml" | "Yaml" => FileFormat::Yml,
                         "Json" => FileFormat::Json,
                         "Toml" => FileFormat::Toml,
-
-                        _ => Err(SynError::new_spanned(path, "Expected one of Yml, Json, Toml"))?
+                        _ => Err(SynError::new_spanned(
+                            value,
+                            "Expected one of: Yml, Yaml, Json, Toml",
+                        ))?,
                     });
-                },
-
-                (name @ ("path" | "format"), value) => {
-                    Err(SynError::new_spanned(
-                        value,
-                        format!(
-                            "Invalid value type for '{name}' expected '{}'",
-                            match name {
-                                "path" => "&str",
-                                "format" => "Json | Toml | Yml",
-                                _ => ""
-                            }
-                        )
-                    ))?
-                },
-
-                (name, _) => {
-                    Err(SynError::new_spanned(
-                        param,
-                        format!(
-                            "Unknown parameter '{name}'. Known parameters include\n- path: &str\n- format: Json | Toml | Yml"
-                        ))
-                    )?
                 }
+
+                (name @ ("path" | "format"), value) => Err(SynError::new_spanned(
+                    value,
+                    format!(
+                        "Invalid value type for '{name}' expected '{}'",
+                        match name {
+                            "path" => "&str",
+                            "format" => "Json | Toml | Yml | Yaml",
+                            _ => "",
+                        }
+                    ),
+                ))?,
+
+                (name, _) => Err(SynError::new_spanned(
+                    param,
+                    format!(
+                        "Unknown parameter '{name}'. Known parameters include\n- path: &str\n- format: Json | Toml | Yml"
+                    ),
+                ))?,
             };
         }
 
         Ok(Self {
             path: path.ok_or(SynError::new(input.span(), "Missing parameter path"))?,
-            format
+            format,
         })
     }
 }
@@ -158,29 +170,55 @@ impl Parse for FieldParameters {
         let params = Punctuated::<MetaNameValue, Token![,]>::parse_terminated(input)?;
 
         let mut name = None;
+        let mut default = None;
         let mut insensitive = None;
         let mut env_override = None;
 
         for param in params {
-            let key = param
-                .path
-                .to_token_stream()
-                .to_string();
+            let key = param.path.to_token_stream().to_string();
 
             match (key.as_str(), &param.value) {
-                ("name", Expr::Lit(ExprLit { lit: Lit::Str(value), .. })) => {
+                (
+                    "name",
+                    Expr::Lit(ExprLit {
+                        lit: Lit::Str(value),
+                        ..
+                    }),
+                ) => {
                     name = Some(value.value());
-                },
+                }
 
-                ("insensitive", Expr::Lit(ExprLit { lit: Lit::Bool(value), .. })) => {
+                (
+                    "insensitive",
+                    Expr::Lit(ExprLit {
+                        lit: Lit::Bool(value),
+                        ..
+                    }),
+                ) => {
                     insensitive = Some(value.value());
-                },
+                }
 
-                ("env_override", Expr::Lit(ExprLit { lit: Lit::Str(value), .. })) => {
+                (
+                    "env_override",
+                    Expr::Lit(ExprLit {
+                        lit: Lit::Str(value),
+                        ..
+                    }),
+                ) => {
                     env_override = Some(value.value());
-                },
+                }
 
-                (name @ ("name" | "insensitive" | "env_override"), value) => {
+                (
+                    "default",
+                    Expr::Lit(ExprLit {
+                        lit: Lit::Str(value),
+                        ..
+                    }),
+                ) => {
+                    default = Some(value.value());
+                }
+
+                (name @ ("name" | "insensitive" | "env_override" | "default"), value) => {
                     Err(SynError::new_spanned(
                         value,
                         format!(
@@ -189,27 +227,27 @@ impl Parse for FieldParameters {
                                 "name" => "&str",
                                 "insensitive" => "bool",
                                 "env_override" => "&str",
-                                _ => ""
+                                // "default" => "&str",
+                                _ => "",
                             }
-                        )
-                    ))?
-                },
-
-                (name, _) => {
-                    Err(SynError::new_spanned(
-                        param,
-                        format!(
-                            "Unknown parameter '{name}'. Known parameters include:\n- name: &str\n- insensitive: bool\n- env_override: &str"
-                        )
+                        ),
                     ))?
                 }
+
+                (name, _) => Err(SynError::new_spanned(
+                    param,
+                    format!(
+                        "Unknown parameter '{name}'. Known parameters include:\n- name: &str\n- insensitive: bool\n- env_override: &str"
+                    ),
+                ))?,
             }
         }
 
         Ok(Self {
             name,
             insensitive: insensitive.unwrap_or(false),
-            env_override
+            env_override,
+            default,
         })
     }
 }

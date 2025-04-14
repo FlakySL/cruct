@@ -1,3 +1,3 @@
 [workspace]
 resolver = "2"
-members = [ "cruct", "cruct_proc" ]
+members = ["cruct", "cruct_proc", "cruct_shared"]
