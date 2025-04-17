@@ -1,7 +1,9 @@
-use super::{Parser, ParserError};
 use std::collections::HashMap;
 use std::fs;
+
 use toml::Value;
+
+use super::{Parser, ParserError};
 
 #[derive(Clone)]
 pub struct TomlParser;
@@ -20,9 +22,6 @@ impl Parser for TomlParser {
             for (k, v) in table {
                 let value_str = match v {
                     Value::String(s) => s,
-                    Value::Integer(i) => i.to_string(),
-                    Value::Float(f) => f.to_string(),
-                    Value::Boolean(b) => b.to_string(),
                     _ => v.to_string(),
                 };
 

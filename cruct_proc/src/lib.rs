@@ -8,12 +8,12 @@ use fields::{StructField, remove_field_attrs};
 use parameters::MacroParameters;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{ItemStruct, parse_macro_input};
+use syn::{Ident, ItemStruct, parse_macro_input};
 
 mod fields;
 mod parameters;
 
-/// Main procedural macro attribute
+/// Macro to load configuration files into Rust structs.
 ///
 /// # Usage
 /// ```ignore
@@ -30,7 +30,11 @@ pub fn cruct(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let fields = match StructField::from_struct(&item) {
         Ok(fields) => fields,
-        Err(err) => return err.to_compile_error().into(),
+        Err(err) => {
+            return err
+                .to_compile_error()
+                .into();
+        },
     };
 
     remove_field_attrs(&mut item);
@@ -38,47 +42,58 @@ pub fn cruct(attr: TokenStream, item: TokenStream) -> TokenStream {
     let struct_name = &item.ident;
     let path = &options.path;
 
-    let field_inits = fields.iter().map(|field| {
-        let field_ident = syn::Ident::new(&field.name, proc_macro2::Span::call_site());
-        let config_key = field
-            .parameters
-            .as_ref()
-            .and_then(|p| p.name.as_ref())
-            .unwrap_or(&field.name);
+    let field_inits = fields
+        .iter()
+        .map(|field| {
+            let field_ident = Ident::new(&field.name, proc_macro2::Span::call_site());
+            let config_key = field
+                .parameters
+                .as_ref()
+                .and_then(|p| {
+                    p.name
+                        .as_ref()
+                })
+                .unwrap_or(&field.name);
 
-        match &field.parameters.as_ref().and_then(|p| p.default.as_ref()) {
-            Some(default) => {
-                quote! {
-                    #field_ident: {
-                        let raw_value = config.get(#config_key)
-                            .map(|s| s.as_str())
-                            .unwrap_or(#default);
+            match &field
+                .parameters
+                .as_ref()
+                .and_then(|p| {
+                    p.default
+                        .as_ref()
+                }) {
+                Some(default) => {
+                    quote! {
+                        #field_ident: {
+                            let raw_value = config.get(#config_key)
+                                .map(|s| s.as_str())
+                                .unwrap_or(#default);
 
-                        raw_value
+                            raw_value
+                                .parse()
+                                .map_err(|_| cruct_shared::ParserError::TypeMismatch {
+                                    field: #config_key.to_string(),
+                                    expected: stringify!(#field_ident).to_string()
+                                })?
+                        }
+                    }
+                },
+                None => {
+                    quote! {
+                        #field_ident: config
+                            .get(#config_key)
+                            .ok_or_else(|| cruct_shared::ParserError::MissingField(
+                                #config_key.to_string()
+                            ))?
                             .parse()
                             .map_err(|_| cruct_shared::ParserError::TypeMismatch {
                                 field: #config_key.to_string(),
                                 expected: stringify!(#field_ident).to_string()
                             })?
                     }
-                }
+                },
             }
-            None => {
-                quote! {
-                    #field_ident: config
-                        .get(#config_key)
-                        .ok_or_else(|| cruct_shared::ParserError::MissingField(
-                            #config_key.to_string()
-                        ))?
-                        .parse()
-                        .map_err(|_| cruct_shared::ParserError::TypeMismatch {
-                            field: #config_key.to_string(),
-                            expected: stringify!(#field_ident).to_string()
-                        })?
-                }
-            }
-        }
-    });
+        });
 
     let format_match = match &options.format {
         Some(file_format) => {
@@ -89,19 +104,18 @@ pub fn cruct(attr: TokenStream, item: TokenStream) -> TokenStream {
             };
 
             quote! { #variant }
-        }
+        },
         None => quote! {
             {
-                use cruct_shared::{default_registry, ParserError};
+                use cruct_shared::{get_parser_by_extension, ParserError};
 
                 let ext = std::path::Path::new(#path)
                     .extension()
                     .and_then(|s| s.to_str())
                     .map(|s| s.to_lowercase());
 
-                let registry = default_registry();
-                let parser = registry
-                    .get_by_extension(ext.as_deref().unwrap_or_default())
+                let parser =
+                    get_parser_by_extension(ext.as_deref().unwrap_or_default())
                     .ok_or_else(|| ParserError::InvalidFileFormat(
                         ext.unwrap_or_else(|| "unknown".into())
                     ))?;
@@ -116,13 +130,12 @@ pub fn cruct(attr: TokenStream, item: TokenStream) -> TokenStream {
 
         impl #struct_name {
             pub fn load() -> Result<Self, cruct_shared::ParserError> {
-                use cruct_shared::{FileFormat, ParserError};
+                use cruct_shared::{FileFormat, ParserError, get_parser_by_extension};
 
                 let format: FileFormat = #format_match;
-                let registry = cruct_shared::parser::default_registry();
 
-                let parser = registry
-                    .get_by_extension(&format.to_string())
+                let parser =
+                    get_parser_by_extension(&format.to_string())
                     .ok_or_else(|| ParserError::InvalidFileFormat(
                         format.to_string()
                     ))?;

@@ -1,7 +1,9 @@
-use super::{Parser, ParserError};
 use std::collections::HashMap;
 use std::fs;
+
 use yaml_rust2::{Yaml, YamlLoader};
+
+use super::{Parser, ParserError};
 
 #[derive(Clone)]
 pub struct YmlParser;
@@ -14,25 +16,23 @@ impl Parser for YmlParser {
     fn load(&self, path: &str) -> Result<HashMap<String, String>, ParserError> {
         let content = fs::read_to_string(path)?;
         let docs = YamlLoader::load_from_str(&content)?;
-        let doc = &docs[0];
+
+        let doc = docs
+            .first()
+            .ok_or(ParserError::TypeMismatch {
+                field: "document".to_string(),
+                expected: "non-empty YAML document".to_string(),
+            })?;
+
         let mut map = HashMap::new();
 
         if let Some(hash) = doc.as_hash() {
             for (k, v) in hash {
                 if let Some(k_str) = k.as_str() {
-                    let value = match v {
-                        Yaml::String(s) => s.clone(),
-                        Yaml::Integer(i) => i.to_string(),
-                        Yaml::Real(f) => f.clone(),
-                        Yaml::Boolean(b) => b.to_string(),
-                        Yaml::Array(_) | Yaml::Hash(_) => {
-                            return Err(ParserError::TypeMismatch {
-                                field: k_str.to_string(),
-                                expected: "primitive value".to_string(),
-                            });
-                        }
-                        _ => "".to_string(),
-                    };
+                    let value = parse_yaml_value(v).map_err(|_| ParserError::TypeMismatch {
+                        field: k_str.to_string(),
+                        expected: "string".to_string(),
+                    })?;
 
                     map.insert(k_str.to_string(), value);
                 }
@@ -40,5 +40,19 @@ impl Parser for YmlParser {
         }
 
         Ok(map)
+    }
+}
+
+fn parse_yaml_value(value: &Yaml) -> Result<String, ParserError> {
+    match value {
+        Yaml::String(s) => Ok(s.clone()),
+        Yaml::Integer(i) => Ok(i.to_string()),
+        Yaml::Boolean(b) => Ok(b.to_string()),
+        Yaml::Real(s) => Ok(s.clone()),
+        Yaml::Null => Ok("null".to_string()),
+        _ => Err(ParserError::TypeMismatch {
+            field: "value".to_string(),
+            expected: "string".to_string(),
+        }),
     }
 }

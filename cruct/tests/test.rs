@@ -63,6 +63,7 @@ fn test_default_values() {
 fn test_missing_field() {
     #[cruct(path = "./tests/fixtures/test_config.toml")]
     #[derive(Debug)]
+    #[allow(dead_code)]
     pub struct TestMissing {
         missing_field: String,
     }
@@ -71,7 +72,7 @@ fn test_missing_field() {
     match result {
         Err(cruct_shared::parser::ParserError::MissingField(field)) => {
             assert_eq!(field, "missing_field");
-        }
+        },
         Ok(_) => panic!("Expected MissingField error"),
         Err(e) => panic!("Unexpected error: {:?}", e),
     }

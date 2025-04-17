@@ -38,7 +38,8 @@ pub enum ParameterError {
 
     /// This error is used when the macro
     #[error(
-        "Couldn't infer the file type, please specify using `type = <type>` when invoking the macro"
+        "Couldn't infer the file type, please specify using `type = <type>` when invoking the \
+         macro"
     )]
     AmbiguousFileType,
 }
@@ -91,40 +92,17 @@ impl Parse for MacroParameters {
         let mut format = None;
 
         for param in params {
-            let key = param.path.to_token_stream().to_string();
+            let key = param
+                .path
+                .to_token_stream()
+                .to_string();
 
             match (key.as_str(), &param.value) {
-                (
-                    "path",
-                    Expr::Lit(ExprLit {
-                        lit: Lit::Str(value),
-                        ..
-                    }),
-                ) => {
+                ("path", Expr::Lit(ExprLit { lit: Lit::Str(value), .. })) => {
                     path = Some(value.value());
-                }
+                },
 
-                // ("format", Expr::Path(path)) => {
-                //     let ident = path.to_token_stream().to_string();
-                //
-                //     format = Some(match ident.as_str() {
-                //         "Yml" => FileFormat::Yml,
-                //         "Json" => FileFormat::Json,
-                //         "Toml" => FileFormat::Toml,
-                //
-                //         _ => Err(SynError::new_spanned(
-                //             path,
-                //             "Expected one of Yml, Json, Toml",
-                //         ))?,
-                //     });
-                // }
-                (
-                    "format",
-                    Expr::Lit(ExprLit {
-                        lit: Lit::Str(value),
-                        ..
-                    }),
-                ) => {
+                ("format", Expr::Lit(ExprLit { lit: Lit::Str(value), .. })) => {
                     let ident = value.value();
                     format = Some(match ident.as_str() {
                         "Yml" | "Yaml" => FileFormat::Yml,
@@ -135,7 +113,7 @@ impl Parse for MacroParameters {
                             "Expected one of: Yml, Yaml, Json, Toml",
                         ))?,
                     });
-                }
+                },
 
                 (name @ ("path" | "format"), value) => Err(SynError::new_spanned(
                     value,
@@ -152,7 +130,8 @@ impl Parse for MacroParameters {
                 (name, _) => Err(SynError::new_spanned(
                     param,
                     format!(
-                        "Unknown parameter '{name}'. Known parameters include\n- path: &str\n- format: Json | Toml | Yml"
+                        "Unknown parameter '{name}'. Known parameters include\n- path: &str\n- \
+                         format: Json | Toml | Yml"
                     ),
                 ))?,
             };
@@ -175,48 +154,27 @@ impl Parse for FieldParameters {
         let mut env_override = None;
 
         for param in params {
-            let key = param.path.to_token_stream().to_string();
+            let key = param
+                .path
+                .to_token_stream()
+                .to_string();
 
             match (key.as_str(), &param.value) {
-                (
-                    "name",
-                    Expr::Lit(ExprLit {
-                        lit: Lit::Str(value),
-                        ..
-                    }),
-                ) => {
+                ("name", Expr::Lit(ExprLit { lit: Lit::Str(value), .. })) => {
                     name = Some(value.value());
-                }
+                },
 
-                (
-                    "insensitive",
-                    Expr::Lit(ExprLit {
-                        lit: Lit::Bool(value),
-                        ..
-                    }),
-                ) => {
+                ("insensitive", Expr::Lit(ExprLit { lit: Lit::Bool(value), .. })) => {
                     insensitive = Some(value.value());
-                }
+                },
 
-                (
-                    "env_override",
-                    Expr::Lit(ExprLit {
-                        lit: Lit::Str(value),
-                        ..
-                    }),
-                ) => {
+                ("env_override", Expr::Lit(ExprLit { lit: Lit::Str(value), .. })) => {
                     env_override = Some(value.value());
-                }
+                },
 
-                (
-                    "default",
-                    Expr::Lit(ExprLit {
-                        lit: Lit::Str(value),
-                        ..
-                    }),
-                ) => {
+                ("default", Expr::Lit(ExprLit { lit: Lit::Str(value), .. })) => {
                     default = Some(value.value());
-                }
+                },
 
                 (name @ ("name" | "insensitive" | "env_override" | "default"), value) => {
                     Err(SynError::new_spanned(
@@ -232,12 +190,13 @@ impl Parse for FieldParameters {
                             }
                         ),
                     ))?
-                }
+                },
 
                 (name, _) => Err(SynError::new_spanned(
                     param,
                     format!(
-                        "Unknown parameter '{name}'. Known parameters include:\n- name: &str\n- insensitive: bool\n- env_override: &str"
+                        "Unknown parameter '{name}'. Known parameters include:\n- name: &str\n- \
+                         insensitive: bool\n- env_override: &str"
                     ),
                 ))?,
             }
