@@ -110,3 +110,89 @@ fn test_case_insensitive() {
     let config = TestInsensitive::load().unwrap();
     assert_eq!(config.http_port, 8080);
 }
+
+fn get_default_from_fn() -> String {
+    "function_default".to_string()
+}
+
+#[test]
+fn test_enhanced_defaults() {
+    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[derive(Debug, PartialEq)]
+    struct TestStringDefault {
+        #[field(default = "literal_default")]
+        field: String,
+    }
+
+    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[derive(Debug, PartialEq)]
+    struct TestFnDefault {
+        #[field(default = get_default_from_fn())]
+        field: String,
+    }
+
+    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[derive(Debug, PartialEq)]
+    struct TestExprDefault {
+        #[field(default = format!("{}-{}", "expr", 42))]
+        field: String,
+    }
+
+    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[derive(Debug, PartialEq)]
+    struct TestNumericDefault {
+        #[field(default = 9000)]
+        port: u16,
+    }
+
+    let string_config = TestStringDefault::load().unwrap();
+    assert_eq!(string_config.field, "literal_default");
+
+    let fn_config = TestFnDefault::load().unwrap();
+    assert_eq!(fn_config.field, "function_default");
+
+    let expr_config = TestExprDefault::load().unwrap();
+    assert_eq!(expr_config.field, "expr-42");
+
+    let numeric_config = TestNumericDefault::load().unwrap();
+    assert_eq!(numeric_config.port, 9000);
+}
+
+#[test]
+fn test_default_with_environment() {
+    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[derive(Debug, PartialEq)]
+    struct TestCombined {
+        #[field(
+            name = "missing_field",
+            env_override = "TEST_DEFAULT_ENV",
+            default = "base_default"
+        )]
+        field: String,
+    }
+
+    unsafe { std::env::set_var("TEST_DEFAULT_ENV", "env_value") };
+    let config = TestCombined::load().unwrap();
+    assert_eq!(config.field, "env_value");
+
+    unsafe { std::env::remove_var("TEST_DEFAULT_ENV") };
+    let config = TestCombined::load().unwrap();
+    assert_eq!(config.field, "base_default");
+}
+
+#[test]
+fn test_default_with_type_conversion() {
+    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[derive(Debug, PartialEq)]
+    struct TestTypeConversion {
+        #[field(default = std::f64::consts::PI)]
+        pi: f64,
+
+        #[field(default = true)]
+        enabled: bool,
+    }
+
+    let config = TestTypeConversion::load().unwrap();
+    assert_eq!(config.pi, std::f64::consts::PI);
+    assert_eq!(config.enabled, true);
+}

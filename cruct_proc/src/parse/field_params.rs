@@ -7,7 +7,7 @@ use syn::{Error as SynError, Expr, ExprLit, Lit, MetaNameValue, Result as SynRes
 /// `MacroParameters` struct.
 ///
 /// **A parameter can only be found once.**
-#[derive(Default, Debug)]
+#[derive(Default)]
 pub struct FieldParams {
     /// A name override for the parameter.
     pub name: Option<String>,
@@ -20,7 +20,7 @@ pub struct FieldParams {
     pub env_override: Option<String>,
 
     /// A default value for the field.
-    pub default: Option<String>,
+    pub default: Option<Expr>,
 }
 
 impl Parse for FieldParams {
@@ -51,11 +51,11 @@ impl Parse for FieldParams {
                     env_override = Some(value.value());
                 },
 
-                ("default", Expr::Lit(ExprLit { lit: Lit::Str(value), .. })) => {
-                    default = Some(value.value());
+                ("default", value) => {
+                    default = Some(value.clone());
                 },
 
-                (name @ ("name" | "insensitive" | "env_override" | "default"), value) => {
+                (name @ ("name" | "insensitive" | "env_override"), value) => {
                     Err(SynError::new_spanned(
                         value,
                         format!(
@@ -64,7 +64,6 @@ impl Parse for FieldParams {
                                 "name" => "&str",
                                 "insensitive" => "bool",
                                 "env_override" => "&str",
-                                "default" => "&str",
                                 _ => "",
                             }
                         ),
