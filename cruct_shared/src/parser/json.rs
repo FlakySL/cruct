@@ -3,7 +3,7 @@ use std::fs::read_to_string;
 
 use jzon::{JsonValue, parse};
 
-use super::{Parser, ParserError};
+use super::{ConfigValue, Parser, ParserError};
 
 #[derive(Clone)]
 pub struct JsonParser;
@@ -13,17 +13,29 @@ impl Parser for JsonParser {
         &["json"]
     }
 
-    fn load(&self, path: &str) -> Result<HashMap<String, String>, ParserError> {
+    fn load(&self, path: &str) -> Result<ConfigValue, ParserError> {
         let content = read_to_string(path)?;
         let json = parse(&content)?;
-        let mut map = HashMap::new();
+        parse_json_value(json)
+    }
+}
 
-        if let JsonValue::Object(obj) = json {
+fn parse_json_value(value: JsonValue) -> Result<ConfigValue, ParserError> {
+    match value {
+        JsonValue::Object(obj) => {
+            let mut map = HashMap::new();
             for (k, v) in obj {
-                map.insert(k, v.to_string());
+                map.insert(k, parse_json_value(v)?);
             }
-        }
-
-        Ok(map)
+            Ok(ConfigValue::Section(map))
+        },
+        JsonValue::Array(arr) => {
+            let items = arr
+                .into_iter()
+                .map(parse_json_value)
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(ConfigValue::Array(items))
+        },
+        _ => Ok(ConfigValue::Value(value.to_string())),
     }
 }

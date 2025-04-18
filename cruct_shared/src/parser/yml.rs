@@ -3,7 +3,7 @@ use std::fs;
 
 use yaml_rust2::{Yaml, YamlLoader};
 
-use super::{Parser, ParserError};
+use super::{ConfigValue, Parser, ParserError};
 
 #[derive(Clone)]
 pub struct YmlParser;
@@ -13,7 +13,7 @@ impl Parser for YmlParser {
         &["yml", "yaml"]
     }
 
-    fn load(&self, path: &str) -> Result<HashMap<String, String>, ParserError> {
+    fn load(&self, path: &str) -> Result<ConfigValue, ParserError> {
         let content = fs::read_to_string(path)?;
         let docs = YamlLoader::load_from_str(&content)?;
 
@@ -24,35 +24,36 @@ impl Parser for YmlParser {
                 expected: "non-empty YAML document".to_string(),
             })?;
 
-        let mut map = HashMap::new();
-
-        if let Some(hash) = doc.as_hash() {
-            for (k, v) in hash {
-                if let Some(k_str) = k.as_str() {
-                    let value = parse_yaml_value(v).map_err(|_| ParserError::TypeMismatch {
-                        field: k_str.to_string(),
-                        expected: "string".to_string(),
-                    })?;
-
-                    map.insert(k_str.to_string(), value);
-                }
-            }
-        }
-
-        Ok(map)
+        parse_yaml_value(doc.clone())
     }
 }
 
-fn parse_yaml_value(value: &Yaml) -> Result<String, ParserError> {
+fn parse_yaml_value(value: Yaml) -> Result<ConfigValue, ParserError> {
     match value {
-        Yaml::String(s) => Ok(s.clone()),
-        Yaml::Integer(i) => Ok(i.to_string()),
-        Yaml::Boolean(b) => Ok(b.to_string()),
-        Yaml::Real(s) => Ok(s.clone()),
-        Yaml::Null => Ok("null".to_string()),
+        Yaml::Hash(hash) => {
+            let mut map = HashMap::new();
+            for (k, v) in hash {
+                if let Yaml::String(k_str) = k {
+                    map.insert(k_str, parse_yaml_value(v)?);
+                }
+            }
+            Ok(ConfigValue::Section(map))
+        },
+        Yaml::Array(arr) => {
+            let items = arr
+                .into_iter()
+                .map(parse_yaml_value)
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(ConfigValue::Array(items))
+        },
+        Yaml::String(s) => Ok(ConfigValue::Value(s)),
+        Yaml::Integer(i) => Ok(ConfigValue::Value(i.to_string())),
+        Yaml::Boolean(b) => Ok(ConfigValue::Value(b.to_string())),
+        Yaml::Real(s) => Ok(ConfigValue::Value(s)),
+        Yaml::Null => Ok(ConfigValue::Value("null".to_string())),
         _ => Err(ParserError::TypeMismatch {
             field: "value".to_string(),
-            expected: "string".to_string(),
+            expected: "supported YAML type".to_string(),
         }),
     }
 }

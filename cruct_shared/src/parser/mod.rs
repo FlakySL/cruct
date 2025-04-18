@@ -32,6 +32,16 @@ pub enum ParserError {
     #[error("Type mismatch in field '{field}', expected {expected}")]
     TypeMismatch { field: String, expected: String },
 
+    #[error("Unsupported type: {0}")]
+    UnsupportedType(String),
+
+    #[error("Nested configuration error in {section}: {source}")]
+    NestedError {
+        section: String,
+        #[source]
+        source: Box<ParserError>,
+    },
+
     /// Standard IO error.
     #[error("{0:#}")]
     Io(#[from] StdError),
@@ -73,6 +83,13 @@ impl Display for FileFormat {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum ConfigValue {
+    Value(String),
+    Section(HashMap<String, ConfigValue>),
+    Array(Vec<ConfigValue>),
+}
+
 /// Trait defining the interface for parsers.
 /// Parsers must be thread-safe (`Send + Sync`).
 pub trait Parser: Send + Sync {
@@ -93,7 +110,7 @@ pub trait Parser: Send + Sync {
     /// Main parsing logic.
     /// Loads a file and returns a map of key-value pairs.
     /// Returns a `ParserError` if parsing fails.
-    fn load(&self, path: &str) -> Result<HashMap<String, String>, ParserError>;
+    fn load(&self, path: &str) -> Result<ConfigValue, ParserError>;
 }
 
 /// Function to get a parser based on file extension.
@@ -104,5 +121,64 @@ pub fn get_parser_by_extension(ext: &str) -> Option<Arc<dyn Parser>> {
         "json" => Some(Arc::new(JsonParser)),
         "toml" => Some(Arc::new(TomlParser)),
         _ => None,
+    }
+}
+
+pub trait FromConfigValue {
+    fn from_config_value(value: &ConfigValue) -> Result<Self, ParserError>
+    where
+        Self: Sized;
+}
+
+/// Macro to impl FromConfigValue for specific scalar types.
+macro_rules! impl_from_config_value {
+    ($t:ty) => {
+        impl FromConfigValue for $t {
+            fn from_config_value(value: &ConfigValue) -> Result<Self, ParserError> {
+                match value {
+                    ConfigValue::Value(s) => s
+                        .parse::<$t>()
+                        .map_err(|_| ParserError::TypeMismatch {
+                            field: "".into(),
+                            expected: stringify!($t).into(),
+                        }),
+                    _ => Err(ParserError::TypeMismatch {
+                        field: "".into(),
+                        expected: stringify!($t).into(),
+                    }),
+                }
+            }
+        }
+    };
+}
+
+// Scalar types
+impl_from_config_value!(String);
+impl_from_config_value!(u16);
+impl_from_config_value!(f64);
+impl_from_config_value!(bool);
+
+/// Helper trait to convert a `ConfigValue` to a `Vec<T>`.
+impl<T> FromConfigValue for Vec<T>
+where
+    T: FromConfigValue,
+{
+    fn from_config_value(value: &ConfigValue) -> Result<Self, ParserError> {
+        match value {
+            ConfigValue::Array(items) => items
+                .iter()
+                .enumerate()
+                .map(|(i, item)| {
+                    T::from_config_value(item).map_err(|e| ParserError::NestedError {
+                        section: format!("[{}]", i),
+                        source: Box::new(e),
+                    })
+                })
+                .collect(),
+            _ => Err(ParserError::TypeMismatch {
+                field: "".into(),
+                expected: "array".into(),
+            }),
+        }
     }
 }

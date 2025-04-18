@@ -3,7 +3,7 @@ use std::fs;
 
 use toml::Value;
 
-use super::{Parser, ParserError};
+use super::{ConfigValue, Parser, ParserError};
 
 #[derive(Clone)]
 pub struct TomlParser;
@@ -13,22 +13,33 @@ impl Parser for TomlParser {
         &["toml"]
     }
 
-    fn load(&self, path: &str) -> Result<HashMap<String, String>, ParserError> {
+    fn load(&self, path: &str) -> Result<ConfigValue, ParserError> {
         let content = fs::read_to_string(path)?;
-        let value = content.parse::<Value>()?;
-        let mut map = HashMap::new();
+        let value = content.parse::<toml::Value>()?;
+        parse_toml_value(value)
+    }
+}
 
-        if let Value::Table(table) = value {
+fn parse_toml_value(value: toml::Value) -> Result<ConfigValue, ParserError> {
+    match value {
+        Value::Table(table) => {
+            let mut map = HashMap::new();
             for (k, v) in table {
-                let value_str = match v {
-                    Value::String(s) => s,
-                    _ => v.to_string(),
-                };
-
-                map.insert(k, value_str);
+                map.insert(k, parse_toml_value(v)?);
             }
-        }
-
-        Ok(map)
+            Ok(ConfigValue::Section(map))
+        },
+        Value::Array(arr) => {
+            let items = arr
+                .into_iter()
+                .map(parse_toml_value)
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(ConfigValue::Array(items))
+        },
+        Value::String(s) => Ok(ConfigValue::Value(s)),
+        Value::Integer(i) => Ok(ConfigValue::Value(i.to_string())),
+        Value::Float(f) => Ok(ConfigValue::Value(f.to_string())),
+        Value::Boolean(b) => Ok(ConfigValue::Value(b.to_string())),
+        Value::Datetime(dt) => Ok(ConfigValue::Value(dt.to_string())),
     }
 }

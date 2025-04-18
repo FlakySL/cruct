@@ -1,2 +1,15 @@
 else: "yaml value"
 http_port: 4000
+
+items:
+  - alpha
+  - beta
+  - gamma
+numbers:
+  - 100
+  - 200
+  - 300
+
+matrix:
+  - [1, 2]
+  - [3, 4]

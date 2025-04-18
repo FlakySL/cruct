@@ -58,7 +58,7 @@ pub fn generate_impl_block(
                 .as_ref()
                 .unwrap_or(&default_params);
 
-            generate_field_initialization(params_ref, field_ident, config_key)
+            generate_field_initialization(params_ref, field_ident, config_key, &field.ty)
         });
 
     quote! {
@@ -70,6 +70,19 @@ pub fn generate_impl_block(
                 let parser = get_parser_by_extension(&format.to_string())
                     .ok_or_else(|| ParserError::InvalidFileFormat(format.to_string()))?;
                 let config = parser.load(#path)?;
+
+                Self::load_from(&config)
+            }
+
+            pub fn load_from(config: &cruct_shared::ConfigValue) -> Result<Self, cruct_shared::ParserError> {
+                use cruct_shared::{ConfigValue, ParserError};
+
+                let ConfigValue::Section(section) = config else {
+                    return Err(ParserError::TypeMismatch {
+                        field: "root".into(),
+                        expected: "section".into()
+                    });
+                };
 
                 Ok(Self {
                     #(#field_inits),*

@@ -1,2 +1,11 @@
 else = "toml value"
 http_port = 8080
+
+items = ["a", "b", "c"]
+numbers = [1, 2, 3]
+
+matrix = [[1, 2], [3, 4]]
+
+[nested]
+items = ["foo", "bar"]
+numbers = [42, 99]

@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::Ident;
+use syn::{Ident, Type};
 
 use crate::parse::FieldParams;
 
@@ -8,42 +8,67 @@ pub fn generate_field_initialization(
     field: &FieldParams,
     field_ident: &Ident,
     config_key: &str,
+    field_type: &Type,
 ) -> TokenStream {
+    let env_check = field
+        .env_override
+        .as_ref()
+        .map(|env_var| {
+            quote! {
+                std::env::var(#env_var)
+                    .ok()
+                    .map(|s| cruct_shared::parser::ConfigValue::Value(s))
+            }
+        })
+        .unwrap_or_else(|| quote! { None });
+
     let config_lookup = if field.insensitive {
         quote! {
-            config.iter()
+            section.iter()
                 .find(|(k, _)| k.eq_ignore_ascii_case(#config_key))
                 .map(|(_, v)| v.clone())
         }
     } else {
-        quote! { config.get(#config_key).cloned() }
+        quote! {
+            section.get(#config_key).cloned()
+        }
     };
 
-    let initial_chain = if let Some(env_var) = &field.env_override {
-        let env_check = quote! { std::env::var(#env_var).ok() };
-        quote! { #env_check.or_else(|| #config_lookup) }
-    } else {
-        quote! { #config_lookup }
+    let value_source = quote! {
+        #env_check
+            .or_else(|| #config_lookup)
     };
 
-    let raw_value_expr = match &field.default {
+    let value_parsing = match &field.default {
         Some(default) => quote! {
-            #initial_chain
-                .unwrap_or_else(|| #default.to_string())
+            match #value_source {
+                Some(config_value) => {
+                    <#field_type as cruct_shared::FromConfigValue>::from_config_value(&config_value)
+                        .map_err(|e| cruct_shared::parser::ParserError::NestedError {
+                            section: #config_key.to_string(),
+                            source: Box::new(e),
+                        })?
+                }
+                None => #default
+            }
         },
         None => quote! {
-            #initial_chain
-                .ok_or_else(|| cruct_shared::ParserError::MissingField(#config_key.to_string()))?
+            {
+                let config_value = #value_source
+                        .ok_or_else(|| cruct_shared::parser::ParserError::MissingField(#config_key.to_string()))?;
+
+                <#field_type as cruct_shared::FromConfigValue>::from_config_value(&config_value)
+                    .map_err(|e| cruct_shared::parser::ParserError::NestedError {
+                        section: #config_key.to_string(),
+                        source: Box::new(e),
+                    })?
+            }
         },
     };
 
     quote! {
         #field_ident: {
-            let raw_value = #raw_value_expr;
-            raw_value.parse().map_err(|_| cruct_shared::ParserError::TypeMismatch {
-                field: #config_key.to_string(),
-                expected: stringify!(#field_ident).to_string()
-            })?
+            #value_parsing
         }
     }
 }
