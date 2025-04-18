@@ -3,9 +3,8 @@ use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::{Error as SynError, Expr, ExprLit, Lit, MetaNameValue, Result as SynResult, Token};
 
-/// This struct represents a specific
-/// field configuration, used along
-/// the `MacroParameters` struct.
+/// This struct represents a specific field configuration, used along the
+/// `MacroParameters` struct.
 ///
 /// **A parameter can only be found once.**
 #[derive(Default, Debug)]
@@ -13,12 +12,10 @@ pub struct FieldParams {
     /// A name override for the parameter.
     pub name: Option<String>,
 
-    /// Whether the parameter query
-    /// is case-sensitive or insensitive.
+    /// Whether the parameter query is case-sensitive or insensitive.
     pub insensitive: bool,
 
-    /// An environment variable name
-    /// to replace or set the field if
+    /// An environment variable name to replace or set the field if
     /// found.
     pub env_override: Option<String>,
 
@@ -67,7 +64,7 @@ impl Parse for FieldParams {
                                 "name" => "&str",
                                 "insensitive" => "bool",
                                 "env_override" => "&str",
-                                // "default" => "&str",
+                                "default" => "&str",
                                 _ => "",
                             }
                         ),

@@ -19,6 +19,7 @@ pub fn generate_impl_block(
                 FileFormat::Toml => quote! { cruct_shared::FileFormat::Toml },
                 FileFormat::Yml => quote! { cruct_shared::FileFormat::Yml },
             };
+
             quote! { #variant }
         },
         None => quote! { /* auto-detect via extension */
@@ -32,6 +33,7 @@ pub fn generate_impl_block(
                     .ok_or_else(|| ParserError::InvalidFileFormat(
                         ext.unwrap_or_else(|| "unknown".into())
                     ))?;
+
                 parser.format()
             }
         },
@@ -68,6 +70,7 @@ pub fn generate_impl_block(
                 let parser = get_parser_by_extension(&format.to_string())
                     .ok_or_else(|| ParserError::InvalidFileFormat(format.to_string()))?;
                 let config = parser.load(#path)?;
+
                 Ok(Self {
                     #(#field_inits),*
                 })

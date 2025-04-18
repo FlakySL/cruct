@@ -1,31 +1,14 @@
 use cruct::cruct;
 
-#[cruct(path = "./tests/fixtures/test_config.toml", format = "Toml")]
-#[derive(Debug, PartialEq)]
-struct TestToml {
-    #[field(name = "else")]
-    something: String,
-    http_port: u16,
-}
-
-#[cruct(path = "./tests/fixtures/test_config.json", format = "Json")]
-#[derive(Debug, PartialEq)]
-struct TestJson {
-    #[field(name = "else")]
-    something: String,
-    http_port: u16,
-}
-
-#[cruct(path = "./tests/fixtures/test_config.yml", format = "Yml")]
-#[derive(Debug, PartialEq)]
-struct TestYaml {
-    #[field(name = "else")]
-    something: String,
-    http_port: u16,
-}
-
 #[test]
 fn test_toml_loading() {
+    #[cruct(path = "./tests/fixtures/test_config.toml", format = "Toml")]
+    #[derive(Debug, PartialEq)]
+    struct TestToml {
+        #[field(name = "else")]
+        something: String,
+        http_port: u16,
+    }
     let config = TestToml::load().unwrap();
 
     assert_eq!(config.something, "toml value");
@@ -34,6 +17,14 @@ fn test_toml_loading() {
 
 #[test]
 fn test_json_loading() {
+    #[cruct(path = "./tests/fixtures/test_config.json", format = "Json")]
+    #[derive(Debug, PartialEq)]
+    struct TestJson {
+        #[field(name = "else")]
+        something: String,
+        http_port: u16,
+    }
+
     let config = TestJson::load().unwrap();
     assert_eq!(config.something, "json value");
     assert_eq!(config.http_port, 3000);
@@ -41,6 +32,14 @@ fn test_json_loading() {
 
 #[test]
 fn test_yaml_loading() {
+    #[cruct(path = "./tests/fixtures/test_config.yml", format = "Yml")]
+    #[derive(Debug, PartialEq)]
+    struct TestYaml {
+        #[field(name = "else")]
+        something: String,
+        http_port: u16,
+    }
+
     let config = TestYaml::load().unwrap();
     assert_eq!(config.something, "yaml value");
     assert_eq!(config.http_port, 4000);
@@ -97,4 +96,17 @@ fn test_env_override() {
     unsafe {
         std::env::remove_var("TEST_HTTP_PORT");
     }
+}
+
+#[test]
+fn test_case_insensitive() {
+    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[derive(Debug, PartialEq)]
+    struct TestInsensitive {
+        #[field(name = "HTTP_PORT", insensitive = true)]
+        http_port: u16,
+    }
+
+    let config = TestInsensitive::load().unwrap();
+    assert_eq!(config.http_port, 8080);
 }

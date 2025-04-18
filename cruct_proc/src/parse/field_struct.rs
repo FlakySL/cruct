@@ -14,7 +14,7 @@ pub struct StructField {
     pub name: String,
     /// The type of the field.
     pub ty: Type,
-
+    /// The identifier of the field.
     pub ident: Ident,
 }
 

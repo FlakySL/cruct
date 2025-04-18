@@ -9,7 +9,15 @@ pub fn generate_field_initialization(
     field_ident: &Ident,
     config_key: &str,
 ) -> TokenStream {
-    let config_lookup = quote! { config.get(#config_key).cloned() };
+    let config_lookup = if field.insensitive {
+        quote! {
+            config.iter()
+                .find(|(k, _)| k.eq_ignore_ascii_case(#config_key))
+                .map(|(_, v)| v.clone())
+        }
+    } else {
+        quote! { config.get(#config_key).cloned() }
+    };
 
     let initial_chain = if let Some(env_var) = &field.env_override {
         let env_check = quote! { std::env::var(#env_var).ok() };
