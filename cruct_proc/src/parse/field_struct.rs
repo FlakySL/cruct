@@ -1,6 +1,7 @@
-use syn::{Attribute, ItemStruct, Result as SynResult, Type};
+use syn::spanned::Spanned;
+use syn::{Attribute, Ident, ItemStruct, Result as SynResult, Type};
 
-use crate::parameters::FieldParameters;
+use super::FieldParams;
 
 /// This represents a parsed struct field that optionally might contain
 /// parameters on how to resolve configuration for
@@ -8,11 +9,13 @@ use crate::parameters::FieldParameters;
 pub struct StructField {
     /// Optional parameters associated with the field, used for resolving
     /// configuration.
-    pub parameters: Option<FieldParameters>,
+    pub params: Option<FieldParams>,
     /// The name of the field as a string.
     pub name: String,
     /// The type of the field.
-    pub data_type: Type,
+    pub ty: Type,
+
+    pub ident: Ident,
 }
 
 impl StructField {
@@ -35,11 +38,11 @@ impl StructField {
 
         for field in &item.fields {
             fields.push(Self {
-                parameters: field
+                params: field
                     .attrs
                     .iter()
                     .find(|attr| is_field_attr(attr))
-                    .map(|attr| attr.parse_args::<FieldParameters>())
+                    .map(|attr| attr.parse_args::<FieldParams>())
                     .transpose()?,
 
                 name: field
@@ -48,9 +51,14 @@ impl StructField {
                     .unwrap()
                     .to_string(),
 
-                data_type: field
+                ty: field
                     .ty
                     .clone(),
+
+                ident: field
+                    .ident
+                    .clone()
+                    .ok_or_else(|| syn::Error::new(field.span(), "Unnamed field not supported"))?,
             });
         }
 

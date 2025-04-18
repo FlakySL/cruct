@@ -77,3 +77,24 @@ fn test_missing_field() {
         Err(e) => panic!("Unexpected error: {:?}", e),
     }
 }
+
+#[test]
+fn test_env_override() {
+    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[derive(Debug, PartialEq)]
+    struct TestEnv {
+        #[field(env_override = "TEST_HTTP_PORT")]
+        http_port: u16,
+    }
+
+    unsafe {
+        std::env::set_var("TEST_HTTP_PORT", "9999");
+    }
+
+    let config = TestEnv::load().unwrap();
+    assert_eq!(config.http_port, 9999);
+
+    unsafe {
+        std::env::remove_var("TEST_HTTP_PORT");
+    }
+}
