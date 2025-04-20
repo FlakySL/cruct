@@ -51,6 +51,7 @@ fn merge_sections_overrides_existing_and_inserts_new() {
     } else {
         panic!("nested section missing");
     }
+
     // b inserted
     assert_eq!(merged.get("b"), Some(&ConfigValue::Value("3".to_string())));
 }
@@ -80,22 +81,26 @@ fn config_file_source_auto_detect_extension() -> Result<(), ParserError> {
     // Create a JSON file with a simple key
     let mut file = NamedTempFile::new().unwrap();
     writeln!(file, "{{ \"baz\": 123 }}").unwrap();
+
     // rename to have .json extension
     let path = file
         .into_temp_path()
         .with_extension("json");
-    std::fs::write(&path, r#"{ "baz": 123 }"#).unwrap();
+    std::fs::write(&path, r#"{ "baz": 123 }"#)?;
+
     let src = ConfigFileSource::new(
         path.to_str()
             .unwrap(),
         None,
     );
     let val = src.load()?;
+
     if let ConfigValue::Section(map) = val {
         assert_eq!(map.get("baz"), Some(&ConfigValue::Value("123".to_string())));
     } else {
         panic!("Expected section");
     }
+
     Ok(())
 }
 
@@ -108,6 +113,7 @@ fn config_builder_merges_file_sources_in_order() -> Result<(), ParserError> {
         .path()
         .to_str()
         .unwrap();
+
     // Override TOML
     let mut file2 = NamedTempFile::new().unwrap();
     writeln!(file2, "port = 9000")?;
@@ -126,6 +132,7 @@ fn config_builder_merges_file_sources_in_order() -> Result<(), ParserError> {
     } else {
         panic!("Expected section");
     }
+
     Ok(())
 }
 
@@ -158,5 +165,68 @@ fn config_builder_applies_dummy_source_last() -> Result<(), ParserError> {
     } else {
         panic!("Expected section");
     }
+
     Ok(())
+}
+
+#[cfg(feature = "cli")]
+mod cli_source_tests {
+    use clap::{Arg, Command};
+    use cruct_shared::ConfigValue;
+    use cruct_shared::source::{ClapSource, ConfigSource};
+
+    #[test]
+    fn clap_source_parses_single_flag() {
+        let cmd = Command::new("test_app").arg(
+            Arg::new("port")
+                    .long("port")
+                    .num_args(1)  // Explicitly expect 1 value
+                    .value_name("PORT"),
+        );
+
+        // Parse arguments first to get ArgMatches
+        let matches = cmd.get_matches_from(["test_app", "--port", "4242"]);
+
+        let clap_source = ClapSource::new(matches);
+        let config = clap_source
+            .load()
+            .unwrap();
+
+        if let ConfigValue::Section(map) = config {
+            assert_eq!(map.get("port"), Some(&ConfigValue::Value("4242".to_string())));
+        } else {
+            panic!("Expected ConfigValue::Section");
+        }
+    }
+
+    #[test]
+    fn clap_source_merges_multiple_flags() {
+        let cmd = Command::new("my_app")
+            .arg(
+                Arg::new("host")
+                    .long("host")
+                    .num_args(1)
+                    .value_name("HOST"),
+            )
+            .arg(
+                Arg::new("debug")
+                    .long("debug")
+                    .num_args(1)
+                    .value_name("DEBUG"),
+            );
+
+        let matches = cmd.get_matches_from(["my_app", "--host", "localhost", "--debug", "true"]);
+
+        let clap_source = ClapSource::new(matches);
+        let config = clap_source
+            .load()
+            .unwrap();
+
+        if let ConfigValue::Section(map) = config {
+            assert_eq!(map.get("host"), Some(&ConfigValue::Value("localhost".to_string())));
+            assert_eq!(map.get("debug"), Some(&ConfigValue::Value("true".to_string())));
+        } else {
+            panic!("Expected ConfigValue::Section");
+        }
+    }
 }

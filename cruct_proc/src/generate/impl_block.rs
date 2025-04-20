@@ -65,8 +65,9 @@ pub fn generate_impl_block(
 
                     #[cfg(feature = "cli")]
                     {
-                        let cmd = cruct_shared::clap::Command::new(env!("CARGO_PKG_NAME"));
-                        builder = builder.add_source(ClapSource::new(cmd));
+                        let matches = cruct_shared::clap::Command::new(env!("CARGO_PKG_NAME"))
+                            .get_matches();
+                        builder = builder.add_source(ClapSource::new(matches));
                     }
 
                     builder.load()?

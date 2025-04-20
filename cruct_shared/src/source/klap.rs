@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use clap::{ArgMatches, Command};
+use clap::ArgMatches;
 
 use super::ConfigSource;
 use crate::{ConfigValue, ParserError};
@@ -12,9 +12,8 @@ pub struct ClapSource {
 }
 
 impl ClapSource {
-    /// Build from a `clap::Command` that the user configures with all flags.
-    pub fn new(cmd: Command) -> Self {
-        let matches = cmd.get_matches();
+    /// Build a new `ClapSource` from the given `ArgMatches`.
+    pub fn new(matches: ArgMatches) -> Self {
         ClapSource { matches }
     }
 }
