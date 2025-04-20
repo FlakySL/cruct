@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use jzon::Error as JsonError;
 use thiserror::Error as ThisError;
-use toml::de::Error as TomlError;
+use toml_edit::TomlError;
 use yaml_rust2::ScanError as YmlError;
 
 mod json;
