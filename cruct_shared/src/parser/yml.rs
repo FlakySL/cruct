@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::fs;
+use std::fs::read_to_string;
 
 use yaml_rust2::{Yaml, YamlLoader};
 
@@ -14,7 +14,7 @@ impl Parser for YmlParser {
     }
 
     fn load(&self, path: &str) -> Result<ConfigValue, ParserError> {
-        let content = fs::read_to_string(path)?;
+        let content = read_to_string(path)?;
         let docs = YamlLoader::load_from_str(&content)?;
 
         let doc = docs

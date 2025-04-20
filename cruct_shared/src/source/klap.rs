@@ -33,6 +33,7 @@ impl ConfigSource for ClapSource {
                 map.insert(id.to_string(), ConfigValue::Value(val.clone()));
             }
         }
+
         Ok(ConfigValue::Section(map))
     }
 }

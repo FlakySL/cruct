@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::io::Error as StdError;
+use std::str::FromStr;
 use std::sync::Arc;
 
 use jzon::Error as JsonError;
@@ -32,8 +33,9 @@ pub enum ParserError {
     #[error("Type mismatch in field '{field}', expected {expected}")]
     TypeMismatch { field: String, expected: String },
 
-    #[error("Unsupported type: {0}")]
-    UnsupportedType(String),
+    /// This error occurs when a file is not found.
+    #[error("This file has no file extension")]
+    MissingFileExtension,
 
     #[error("Nested configuration error in {section}: {source}")]
     NestedError {
@@ -115,13 +117,22 @@ pub trait Parser: Send + Sync {
 
 /// Function to get a parser based on file extension.
 /// Returns an `Option` containing the parser if the extension is supported.
-pub fn get_parser_by_extension(ext: &str) -> Option<Arc<dyn Parser>> {
+pub fn get_parser(ext: &str) -> Result<Arc<dyn Parser>, ParserError> {
     match ext {
-        "yml" | "yaml" => Some(Arc::new(YmlParser)),
-        "json" => Some(Arc::new(JsonParser)),
-        "toml" => Some(Arc::new(TomlParser)),
-        _ => None,
+        "yml" | "yaml" => Ok(Arc::new(YmlParser)),
+        "json" => Ok(Arc::new(JsonParser)),
+        "toml" => Ok(Arc::new(TomlParser)),
+        _ => Err(ParserError::InvalidFileFormat(ext.into())),
     }
+}
+
+pub fn get_file_extension(path: &str) -> Result<String, ParserError> {
+    let ext = std::path::Path::new(path)
+        .extension()
+        .and_then(|s| s.to_str())
+        .ok_or(ParserError::MissingFileExtension)?;
+
+    Ok(ext.into())
 }
 
 pub trait FromConfigValue {
@@ -130,20 +141,17 @@ pub trait FromConfigValue {
         Self: Sized;
 }
 
-/// Macro to impl FromConfigValue for specific scalar types.
+/// Macro to implement FromConfigValue for scalar types.
+/// This macro generates implementations for types that can be parsed from a
+/// string.
 macro_rules! impl_from_config_value {
     ($t:ty) => {
         impl FromConfigValue for $t {
             fn from_config_value(value: &ConfigValue) -> Result<Self, ParserError> {
                 match value {
-                    ConfigValue::Value(s) => s
-                        .parse::<$t>()
-                        .map_err(|_| ParserError::TypeMismatch {
-                            field: "".into(),
-                            expected: stringify!($t).into(),
-                        }),
+                    ConfigValue::Value(s) => parse_value::<$t>(s),
                     _ => Err(ParserError::TypeMismatch {
-                        field: "".into(),
+                        field: "Expected a scalar value".into(),
                         expected: stringify!($t).into(),
                     }),
                 }
@@ -152,11 +160,34 @@ macro_rules! impl_from_config_value {
     };
 }
 
+/// Helper function to parse a string into a specific type.
+/// Returns a ParserError if parsing fails.
+fn parse_value<T: FromStr>(s: &str) -> Result<T, ParserError> {
+    s.parse::<T>()
+        .map_err(|_| ParserError::TypeMismatch {
+            field: "Failed to parse value".into(),
+            expected: stringify!(T).into(),
+        })
+}
+
 // Scalar types
 impl_from_config_value!(String);
-impl_from_config_value!(u16);
-impl_from_config_value!(f64);
 impl_from_config_value!(bool);
+impl_from_config_value!(i8);
+impl_from_config_value!(i16);
+impl_from_config_value!(i32);
+impl_from_config_value!(i64);
+impl_from_config_value!(i128);
+impl_from_config_value!(u8);
+impl_from_config_value!(u16);
+impl_from_config_value!(u32);
+impl_from_config_value!(u64);
+impl_from_config_value!(u128);
+impl_from_config_value!(usize);
+impl_from_config_value!(isize);
+impl_from_config_value!(f32);
+impl_from_config_value!(f64);
+impl_from_config_value!(char);
 
 /// Helper trait to convert a `ConfigValue` to a `Vec<T>`.
 impl<T> FromConfigValue for Vec<T>

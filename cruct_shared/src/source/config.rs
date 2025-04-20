@@ -1,34 +1,33 @@
-use std::path::Path;
+use std::sync::Arc;
 
 use super::ConfigSource;
-use crate::{ConfigValue, ParserError, get_parser_by_extension};
+use crate::parser::get_file_extension;
+use crate::{ConfigValue, FileFormat, Parser, ParserError, get_parser};
 
 pub struct ConfigFileSource {
     path: String,
-    format: Option<crate::FileFormat>,
+    format: Option<FileFormat>,
 }
 
 impl ConfigFileSource {
-    pub fn new(path: impl Into<String>, format: Option<crate::FileFormat>) -> Self {
+    pub fn new(path: impl Into<String>, format: Option<FileFormat>) -> Self {
         ConfigFileSource { path: path.into(), format }
+    }
+
+    fn get_parser(&self) -> Result<Arc<dyn Parser>, ParserError> {
+        let ext = if let Some(fmt) = &self.format {
+            fmt.to_string()
+        } else {
+            get_file_extension(&self.path)?
+        };
+
+        get_parser(&ext)
     }
 }
 
 impl ConfigSource for ConfigFileSource {
     fn load(&self) -> Result<ConfigValue, ParserError> {
-        let parser = if let Some(fmt) = &self.format {
-            let ext_str = fmt.to_string();
-
-            get_parser_by_extension(&ext_str).ok_or(ParserError::InvalidFileFormat(ext_str))?
-        } else {
-            let ext = Path::new(&self.path)
-                .extension()
-                .and_then(|s| s.to_str())
-                .unwrap_or_default();
-            get_parser_by_extension(ext)
-                .ok_or_else(|| ParserError::InvalidFileFormat(ext.into()))?
-        };
-
+        let parser = self.get_parser()?;
         parser.load(&self.path)
     }
 }

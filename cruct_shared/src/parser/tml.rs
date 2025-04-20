@@ -15,12 +15,13 @@ impl Parser for TomlParser {
 
     fn load(&self, path: &str) -> Result<ConfigValue, ParserError> {
         let content = fs::read_to_string(path)?;
-        let value = content.parse::<toml::Value>()?;
+        let value = content.parse::<Value>()?;
+
         parse_toml_value(value)
     }
 }
 
-fn parse_toml_value(value: toml::Value) -> Result<ConfigValue, ParserError> {
+fn parse_toml_value(value: Value) -> Result<ConfigValue, ParserError> {
     match value {
         Value::Table(table) => {
             let mut map = HashMap::new();

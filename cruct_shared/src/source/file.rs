@@ -1,7 +1,6 @@
-use std::path::Path;
-
 use super::ConfigSource;
-use crate::{ConfigValue, ParserError, get_parser_by_extension};
+use crate::parser::get_file_extension;
+use crate::{ConfigValue, ParserError, get_parser};
 
 pub struct FileSource {
     path: String,
@@ -15,12 +14,8 @@ impl FileSource {
 
 impl ConfigSource for FileSource {
     fn load(&self) -> Result<ConfigValue, ParserError> {
-        let ext = Path::new(&self.path)
-            .extension()
-            .and_then(|s| s.to_str())
-            .unwrap_or_default();
-        let parser = get_parser_by_extension(ext)
-            .ok_or_else(|| ParserError::InvalidFileFormat(ext.to_string()))?;
+        let ext = get_file_extension(&self.path)?;
+        let parser = get_parser(&ext)?;
 
         parser.load(&self.path)
     }
