@@ -5,10 +5,6 @@ edition = "2024"
 
 [dependencies]
 thiserror = "2.0.12"
-
-toml = { version = "0.8.20", default-features = false, features = [
-    "parse",
-    "display",
-] } # Parsers
 jzon = "0.12.5"
+toml_edit = "0.22.24"
 yaml-rust2 = "0.10.1"
