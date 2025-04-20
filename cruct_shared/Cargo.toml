@@ -3,12 +3,23 @@ name = "cruct_shared"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+cli = ["dep:clap"]
+
 [dependencies]
 thiserror = "2.0.12"
 
+# Sources
+clap = { version = "4.5.37", optional = true }
+
+# Parsers
 toml = { version = "0.8.20", default-features = false, features = [
     "parse",
     "display",
-] } # Parsers
+] }
 jzon = "0.12.5"
 yaml-rust2 = "0.10.1"
+
+[dev-dependencies]
+tempfile = "3.19.1"

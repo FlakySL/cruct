@@ -83,7 +83,7 @@ impl Display for FileFormat {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ConfigValue {
     Value(String),
     Section(HashMap<String, ConfigValue>),
