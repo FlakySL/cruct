@@ -15,8 +15,8 @@ impl Parser for TomlParser {
 
     fn load(&self, path: &str) -> Result<ConfigValue, ParserError> {
         let content = fs::read_to_string(path)?;
-        let value = content.parse::<Value>()?;
-        parse_toml_value(&value)
+        let value = content.parse::<DocumentMut>()?;
+        parse_toml(value.as_item())
     }
 }
 
