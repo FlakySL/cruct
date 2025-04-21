@@ -14,11 +14,8 @@ thiserror = "2.0.12"
 clap = { version = "4.5.37", optional = true }
 
 # Parsers
-toml = { version = "0.8.20", default-features = false, features = [
-    "parse",
-    "display",
-] }
 jzon = "0.12.5"
+toml_edit = "0.22.24"
 yaml-rust2 = "0.10.1"
 
 [dev-dependencies]
