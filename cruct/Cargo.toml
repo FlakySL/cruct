@@ -3,6 +3,10 @@ name = "cruct"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+cli = ["cruct_shared/cli"]
+
 [dependencies]
 cruct_proc = { path = "../cruct_proc" }
 cruct_shared = { path = "../cruct_shared" }

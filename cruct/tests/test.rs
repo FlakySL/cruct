@@ -309,3 +309,27 @@ fn test_nested_struct_toml() {
         }
     );
 }
+
+#[cruct(path = "./tests/fixtures/test_config.toml", format = "Toml")]
+#[derive(Debug, PartialEq)]
+struct TestTomlLoad {
+    #[field(name = "else")]
+    something: String,
+    http_port: u16,
+}
+
+#[test]
+fn test_macro_load_without_cli() {
+    let cfg = TestTomlLoad::load().unwrap();
+    assert_eq!(cfg.something, "toml value");
+    assert_eq!(cfg.http_port, 8080);
+}
+
+#[cfg(feature = "cli")]
+#[test]
+fn test_macro_load_with_cli_feature_enabled() {
+    // Even with `cli` feature on, no flags means behavior is unchanged
+    let cfg = TestTomlLoad::load().unwrap();
+    assert_eq!(cfg.something, "toml value");
+    assert_eq!(cfg.http_port, 8080);
+}
