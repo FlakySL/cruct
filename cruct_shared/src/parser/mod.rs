@@ -186,7 +186,7 @@ pub trait FromConfigValue {
 /// This macro generates implementations for types that can be parsed from a
 /// string.
 macro_rules! impl_from_config_value {
-    ($t:ty) => {
+    ($($t:ty),* $(,)?) => {$(
         impl FromConfigValue for $t {
             fn from_config_value(value: &ConfigValue) -> Result<Self, ParserError> {
                 match value {
@@ -198,7 +198,7 @@ macro_rules! impl_from_config_value {
                 }
             }
         }
-    };
+    )*};
 }
 
 /// Helper function to parse a string into a specific type.
@@ -212,25 +212,9 @@ fn parse_value<T: FromStr>(s: &str) -> Result<T, ParserError> {
 }
 
 // Scalar types
-// TODO: This currently looks disgusting and inefficient. Consider finding a
-// better way to implement this.
-impl_from_config_value!(String);
-impl_from_config_value!(bool);
-impl_from_config_value!(i8);
-impl_from_config_value!(i16);
-impl_from_config_value!(i32);
-impl_from_config_value!(i64);
-impl_from_config_value!(i128);
-impl_from_config_value!(u8);
-impl_from_config_value!(u16);
-impl_from_config_value!(u32);
-impl_from_config_value!(u64);
-impl_from_config_value!(u128);
-impl_from_config_value!(usize);
-impl_from_config_value!(isize);
-impl_from_config_value!(f32);
-impl_from_config_value!(f64);
-impl_from_config_value!(char);
+impl_from_config_value!(
+    String, bool, i8, i16, i32, i64, i128, u8, u16, u32, u64, u128, usize, isize, f32, f64, char
+);
 
 /// Helper trait to convert a `ConfigValue` to a `Vec<T>`.
 impl<T> FromConfigValue for Vec<T>

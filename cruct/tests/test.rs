@@ -12,7 +12,10 @@ fn test_toml_loading() {
         something: String,
         http_port: u16,
     }
-    let config = TestToml::load().unwrap();
+    let config = TestToml::loader()
+        .with_config()
+        .load()
+        .unwrap();
 
     assert_eq!(config.something, "toml value");
     assert_eq!(config.http_port, 8080);
@@ -28,7 +31,10 @@ fn test_json_loading() {
         http_port: u16,
     }
 
-    let config = TestJson::load().unwrap();
+    let config = TestJson::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(config.something, "json value");
     assert_eq!(config.http_port, 3000);
 }
@@ -43,7 +49,10 @@ fn test_yaml_loading() {
         http_port: u16,
     }
 
-    let config = TestYaml::load().unwrap();
+    let config = TestYaml::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(config.something, "yaml value");
     assert_eq!(config.http_port, 4000);
 }
@@ -57,7 +66,10 @@ fn test_default_values() {
         field: String,
     }
 
-    let config = TestDefault::load().unwrap();
+    let config = TestDefault::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(config.field, "default value");
 }
 
@@ -70,7 +82,9 @@ fn test_missing_field() {
         missing_field: String,
     }
 
-    let result = TestMissing::load();
+    let result = TestMissing::loader()
+        .with_config()
+        .load();
     match result {
         Err(cruct_shared::parser::ParserError::MissingField(field)) => {
             assert_eq!(field, "missing_field");
@@ -93,7 +107,10 @@ fn test_env_override() {
         std::env::set_var("TEST_HTTP_PORT", "9999");
     }
 
-    let config = TestEnv::load().unwrap();
+    let config = TestEnv::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(config.http_port, 9999);
 
     unsafe {
@@ -110,7 +127,10 @@ fn test_case_insensitive() {
         http_port: u16,
     }
 
-    let config = TestInsensitive::load().unwrap();
+    let config = TestInsensitive::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(config.http_port, 8080);
 }
 
@@ -148,16 +168,28 @@ fn test_enhanced_defaults() {
         port: u16,
     }
 
-    let string_config = TestStringDefault::load().unwrap();
+    let string_config = TestStringDefault::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(string_config.field, "literal_default");
 
-    let fn_config = TestFnDefault::load().unwrap();
+    let fn_config = TestFnDefault::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(fn_config.field, "function_default");
 
-    let expr_config = TestExprDefault::load().unwrap();
+    let expr_config = TestExprDefault::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(expr_config.field, "expr-42");
 
-    let numeric_config = TestNumericDefault::load().unwrap();
+    let numeric_config = TestNumericDefault::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(numeric_config.port, 9000);
 }
 
@@ -175,11 +207,17 @@ fn test_default_with_environment() {
     }
 
     unsafe { std::env::set_var("TEST_DEFAULT_ENV", "env_value") };
-    let config = TestCombined::load().unwrap();
+    let config = TestCombined::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(config.field, "env_value");
 
     unsafe { std::env::remove_var("TEST_DEFAULT_ENV") };
-    let config = TestCombined::load().unwrap();
+    let config = TestCombined::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(config.field, "base_default");
 }
 
@@ -196,7 +234,10 @@ fn test_default_with_type_conversion() {
         enabled: bool,
     }
 
-    let config = TestTypeConversion::load().unwrap();
+    let config = TestTypeConversion::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(config.pi, std::f64::consts::PI);
     assert_eq!(config.enabled, true);
 }
@@ -210,7 +251,10 @@ fn test_array_toml() {
         numbers: Vec<u16>,
     }
 
-    let config = ArrayToml::load().unwrap();
+    let config = ArrayToml::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(config.items, vec!["a", "b", "c"]);
     assert_eq!(config.numbers, vec![1, 2, 3]);
 }
@@ -224,7 +268,10 @@ fn test_array_json() {
         numbers: Vec<u16>,
     }
 
-    let config = ArrayJson::load().unwrap();
+    let config = ArrayJson::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(config.items, vec!["x", "y", "z"]);
     assert_eq!(config.numbers, vec![10, 20, 30]);
 }
@@ -238,7 +285,10 @@ fn test_array_yaml() {
         numbers: Vec<u16>,
     }
 
-    let config = ArrayYaml::load().unwrap();
+    let config = ArrayYaml::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(config.items, vec!["alpha", "beta", "gamma"]);
     assert_eq!(config.numbers, vec![100, 200, 300]);
 }
@@ -251,7 +301,10 @@ fn test_nested_array_toml() {
         matrix: Vec<Vec<u16>>,
     }
 
-    let cfg = NestedArrayToml::load().unwrap();
+    let cfg = NestedArrayToml::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(cfg.matrix, vec![vec![1, 2], vec![3, 4]]);
 }
 
@@ -263,7 +316,10 @@ fn test_nested_array_json() {
         matrix: Vec<Vec<u16>>,
     }
 
-    let cfg = NestedArrayJson::load().unwrap();
+    let cfg = NestedArrayJson::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(cfg.matrix, vec![vec![1, 2], vec![3, 4]]);
 }
 
@@ -275,7 +331,10 @@ fn test_nested_array_yaml() {
         matrix: Vec<Vec<u16>>,
     }
 
-    let cfg = NestedArrayYaml::load().unwrap();
+    let cfg = NestedArrayYaml::loader()
+        .with_config()
+        .load()
+        .unwrap();
     assert_eq!(cfg.matrix, vec![vec![1, 2], vec![3, 4]]);
 }
 
@@ -301,7 +360,10 @@ fn test_nested_struct_toml() {
         nested: SomeStruct,
     }
 
-    let cfg = NestedConfig::load().unwrap();
+    let cfg = NestedConfig::loader()
+        .with_config()
+        .load()
+        .unwrap();
 
     assert_eq!(cfg.http_port, 8080);
 
@@ -324,24 +386,73 @@ fn test_macro_load_without_cli() {
         http_port: u16,
     }
 
-    let cfg = TestTomlLoad::load().unwrap();
+    let cfg = TestTomlLoad::loader()
+        .with_config()
+        .load()
+        .unwrap();
+
     assert_eq!(cfg.something, "toml value");
     assert_eq!(cfg.http_port, 8080);
 }
 
-#[cfg(feature = "clap")]
 #[test]
-fn test_macro_load_with_cli_feature_enabled() {
-    // Even with `clap` feature on, no flags means behavior is unchanged
-    #[cruct(load_config(path = "./tests/fixtures/test_config.toml", format = "Toml"))]
+fn file_only_loader_reads_toml() {
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
     #[derive(Debug, PartialEq)]
-    struct TestTomlLoad {
-        #[field(name = "else")]
-        something: String,
-        http_port: u16,
+    struct Simple {
+        name: String,
+        count: u32,
     }
 
-    let cfg = TestTomlLoad::load().unwrap();
-    assert_eq!(cfg.something, "toml value");
-    assert_eq!(cfg.http_port, 8080);
+    let got = Simple::loader()
+        .with_cli(1)
+        .with_config()
+        .load()
+        .unwrap();
+
+    assert_eq!(got, Simple { name: "file_name".into(), count: 123 });
+}
+
+#[test]
+fn cli_overrides_file() {
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
+    #[derive(Debug, PartialEq)]
+    struct Simple {
+        name: String,
+        count: u32,
+    }
+
+    unsafe {
+        std::env::set_var("RUST_TEST_ARGS", "--name=cli_name --count=999");
+    }
+
+    let result = Simple::loader()
+        .with_cli(0)
+        .with_config()
+        .load()
+        .unwrap();
+
+    assert_eq!(result, Simple { name: "cli_name".into(), count: 999 });
+}
+
+#[test]
+#[allow(dead_code)]
+fn missing_field_errors() {
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
+    #[derive(Debug)]
+    struct MissingField {
+        present: String,
+        absent: u8,
+    }
+
+    let result = MissingField::loader()
+        .with_cli(0)
+        .with_config()
+        .load();
+
+    assert!(result.is_err());
+    if let Err(e) = result {
+        let field = String::from("name");
+        assert!(matches!(e, ParserError::MissingField(field)));
+    }
 }

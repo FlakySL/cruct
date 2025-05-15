@@ -3,15 +3,8 @@ name = "cruct_shared"
 version = "0.1.0"
 edition = "2024"
 
-[features]
-default = []
-clap = ["dep:clap"]
-
 [dependencies]
 thiserror = "2.0.12"
-
-# Sources
-clap = { version = "4.5.37", optional = true }
 
 # Parsers
 jzon = "0.12.5"
