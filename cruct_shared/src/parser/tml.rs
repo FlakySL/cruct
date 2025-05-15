@@ -21,18 +21,18 @@ impl Parser for TomlParser {
 }
 
 fn parse_toml(item: &Item) -> Result<ConfigValue, ParserError> {
-    match item {
-        Item::None => Ok(ConfigValue::Array(Vec::new())),
-        Item::Value(value) => parse_toml_value(value),
-        Item::Table(table) => parse_table(table),
+    Ok(match item {
+        Item::None => ConfigValue::Array(Vec::new()),
+        Item::Value(value) => parse_toml_value(value)?,
+        Item::Table(table) => parse_table(table)?,
         Item::ArrayOfTables(array_of_tables) => {
             let mut array = Vec::new();
             for table in array_of_tables {
                 array.push(parse_table(table)?);
             }
-            Ok(ConfigValue::Array(array))
+            ConfigValue::Array(array)
         },
-    }
+    })
 }
 
 fn parse_table(table: &Table) -> Result<ConfigValue, ParserError> {
@@ -44,40 +44,40 @@ fn parse_table(table: &Table) -> Result<ConfigValue, ParserError> {
 }
 
 fn parse_toml_value(value: &Value) -> Result<ConfigValue, ParserError> {
-    match value {
+    Ok(match value {
         Value::InlineTable(table) => {
             let mut map = HashMap::new();
             for (k, v) in table {
                 map.insert(k.to_string(), parse_toml_value(v)?);
             }
-            Ok(ConfigValue::Section(map))
+            ConfigValue::Section(map)
         },
         Value::Array(arr) => {
             let items = arr
                 .into_iter()
                 .map(parse_toml_value)
                 .collect::<Result<Vec<_>, _>>()?;
-            Ok(ConfigValue::Array(items))
+            ConfigValue::Array(items)
         },
-        Value::String(s) => Ok(ConfigValue::Value(
+        Value::String(s) => ConfigValue::Value(
             s.clone()
                 .into_value(),
-        )),
-        Value::Integer(i) => Ok(ConfigValue::Value(
+        ),
+        Value::Integer(i) => ConfigValue::Value(
             i.value()
                 .to_string(),
-        )),
-        Value::Float(f) => Ok(ConfigValue::Value(
+        ),
+        Value::Float(f) => ConfigValue::Value(
             f.value()
                 .to_string(),
-        )),
-        Value::Boolean(b) => Ok(ConfigValue::Value(
+        ),
+        Value::Boolean(b) => ConfigValue::Value(
             b.value()
                 .to_string(),
-        )),
-        Value::Datetime(dt) => Ok(ConfigValue::Value(
+        ),
+        Value::Datetime(dt) => ConfigValue::Value(
             dt.value()
                 .to_string(),
-        )),
-    }
+        ),
+    })
 }

@@ -1,5 +1,5 @@
 use syn::spanned::Spanned;
-use syn::{Attribute, Ident, ItemStruct, Result as SynResult, Type};
+use syn::{Attribute, Error as SynError, Ident, ItemStruct, Result as SynResult, Type};
 
 use super::FieldParams;
 
@@ -10,10 +10,13 @@ pub struct StructField {
     /// Optional parameters associated with the field, used for resolving
     /// configuration.
     pub params: Option<FieldParams>,
+
     /// The name of the field as a string.
     pub name: String,
+
     /// The type of the field.
     pub ty: Type,
+
     /// The identifier of the field.
     pub ident: Ident,
 }
@@ -37,28 +40,23 @@ impl StructField {
         let mut fields = Vec::new();
 
         for field in &item.fields {
+            let ident = field
+                .ident
+                .as_ref()
+                .ok_or_else(|| SynError::new(field.span(), "Unnamed field not supported"))?;
+
             fields.push(Self {
+                name: ident.to_string(),
+                ident: ident.clone(),
+                ty: field
+                    .ty
+                    .clone(),
                 params: field
                     .attrs
                     .iter()
                     .find(|attr| is_field_attr(attr))
                     .map(|attr| attr.parse_args::<FieldParams>())
                     .transpose()?,
-
-                name: field
-                    .ident
-                    .as_ref()
-                    .unwrap()
-                    .to_string(),
-
-                ty: field
-                    .ty
-                    .clone(),
-
-                ident: field
-                    .ident
-                    .clone()
-                    .ok_or_else(|| syn::Error::new(field.span(), "Unnamed field not supported"))?,
             });
         }
 
@@ -66,10 +64,34 @@ impl StructField {
     }
 }
 
-/// Check if the attribute's path is identified as "field"
+/// Check if the attribute's path is identified as "env_override",
+/// "shell_override", "name", "insensitive", "default" and "description"
+/// - "env_override" is used to override the field value from an environment
+///   variable
+/// - "shell_override" is used to override the field value from a shell command
+/// - "name" is used to specify the name of the field in the configuration file
+/// - insensitive" is used to specify if the field name should be treated as
+///   case-insensitive
+/// - description" is a metadata attribute that provides a description of the
+///   field
 fn is_field_attr(attr: &Attribute) -> bool {
+    let allowed_attrs = [
+        "env_override",
+        "shell_override",
+        "name",
+        "insensitive",
+        "default",
+        "description",
+        "field",
+    ];
+
     attr.path()
-        .is_ident("field")
+        .get_ident()
+        .is_some_and(|ident| {
+            allowed_attrs
+                .iter()
+                .any(|allowed| ident == allowed)
+        })
 }
 
 /// Removes field attributes with the identifier "field" from a struct.
