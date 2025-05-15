@@ -5,7 +5,7 @@ edition = "2024"
 
 [features]
 default = []
-cli = ["cruct_shared/cli"]
+clap = ["cruct_shared/clap"]
 
 [dependencies]
 cruct_proc = { path = "../cruct_proc" }

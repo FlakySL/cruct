@@ -5,7 +5,7 @@ edition = "2024"
 
 [features]
 default = []
-cli = ["dep:clap"]
+clap = ["dep:clap"]
 
 [dependencies]
 thiserror = "2.0.12"

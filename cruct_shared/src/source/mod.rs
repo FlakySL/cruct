@@ -4,12 +4,12 @@ use crate::{ConfigValue, ParserError};
 
 mod config;
 mod file;
-#[cfg(feature = "cli")]
+#[cfg(feature = "clap")]
 mod klap;
 
 pub use config::ConfigFileSource;
 pub use file::FileSource;
-#[cfg(feature = "cli")]
+#[cfg(feature = "clap")]
 pub use klap::ClapSource;
 
 /// Anything that can yield a `ConfigValue` (file, env, CLI, etc).

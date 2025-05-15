@@ -21,22 +21,33 @@ use yml::YmlParser;
 /// Utilizes the `thiserror` crate for error handling.
 #[derive(Debug, ThisError)]
 pub enum ParserError {
-    /// Error indicating that the file format is not supported.
+    /// Error indicating that the provided file format is not supported by the
+    /// parser. This error is returned when an attempt is made to parse a
+    /// file with an unsupported extension.
     #[error("'{0}' is not a valid file format")]
     InvalidFileFormat(String),
 
-    /// Error indicating that the file format is not supported.
+    /// Error indicating that a required field is missing in the configuration
+    /// file. This error is returned when a field that is expected to be
+    /// present is not found.
     #[error("Missing required field: {0}")]
     MissingField(String),
 
-    /// Error indicating that the file format is not supported.
+    /// Error indicating a type mismatch in a field within the configuration
+    /// file. This error is returned when the type of a field's value does
+    /// not match the expected type.
     #[error("Type mismatch in field '{field}', expected {expected}")]
     TypeMismatch { field: String, expected: String },
 
-    /// This error occurs when a file is not found.
+    /// Error indicating that the file does not have an extension.
+    /// This error is returned when a file path is provided without an
+    /// extension, making it impossible to determine the file format.
     #[error("This file has no file extension")]
     MissingFileExtension,
 
+    /// Error indicating a nested configuration error within a specific section.
+    /// This error provides details about the section where the error occurred
+    /// and the source of the error.
     #[error("Nested configuration error in {section}: {source}")]
     NestedError {
         section: String,
@@ -44,19 +55,27 @@ pub enum ParserError {
         source: Box<ParserError>,
     },
 
-    /// Standard IO error.
+    /// Standard IO error that occurs during file operations.
+    /// This error is returned when there is an issue with reading or writing
+    /// files.
     #[error("{0:#}")]
     Io(#[from] StdError),
 
-    /// TOML parsing error.
+    /// Error indicating a failure in parsing a TOML file.
+    /// This error is returned when the TOML parser encounters invalid syntax or
+    /// structure.
     #[error("TOML parsing error: {0}")]
     TomlError(#[from] TomlError),
 
-    /// JSON parsing error.
+    /// Error indicating a failure in parsing a JSON file.
+    /// This error is returned when the JSON parser encounters invalid syntax or
+    /// structure.
     #[error("JSON parsing error: {0}")]
     JsonError(#[from] JsonError),
 
-    /// YAML parsing error.
+    /// Error indicating a failure in parsing a YAML file.
+    /// This error is returned when the YAML parser encounters invalid syntax or
+    /// structure.
     #[error("YAML parsing error: {0}")]
     YmlError(#[from] YmlError),
 }
@@ -73,6 +92,24 @@ pub enum FileFormat {
     Toml,
 }
 
+// Implement `FromStr` trait for `FileFormat` to allow easy conversion from
+// string.
+impl FromStr for FileFormat {
+    type Err = ParserError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s
+            .to_lowercase()
+            .as_str()
+        {
+            "yml" | "yaml" => Ok(FileFormat::Yml),
+            "json" => Ok(FileFormat::Json),
+            "toml" => Ok(FileFormat::Toml),
+            _ => Err(ParserError::InvalidFileFormat(s.into())),
+        }
+    }
+}
+
 /// Implement `Display` trait for `FileFormat` to allow easy conversion to
 /// string.
 impl Display for FileFormat {
@@ -85,6 +122,8 @@ impl Display for FileFormat {
     }
 }
 
+/// This enum represents the possible values
+/// that can be parsed from a configuration file.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ConfigValue {
     Value(String),
@@ -126,6 +165,7 @@ pub fn get_parser(ext: &str) -> Result<Arc<dyn Parser>, ParserError> {
     }
 }
 
+/// Function to get the file extension from a path.
 pub fn get_file_extension(path: &str) -> Result<String, ParserError> {
     let ext = std::path::Path::new(path)
         .extension()
@@ -135,6 +175,7 @@ pub fn get_file_extension(path: &str) -> Result<String, ParserError> {
     Ok(ext.into())
 }
 
+/// Trait to convert a `ConfigValue` to a specific type.
 pub trait FromConfigValue {
     fn from_config_value(value: &ConfigValue) -> Result<Self, ParserError>
     where
@@ -171,6 +212,8 @@ fn parse_value<T: FromStr>(s: &str) -> Result<T, ParserError> {
 }
 
 // Scalar types
+// TODO: This currently looks disgusting and inefficient. Consider finding a
+// better way to implement this.
 impl_from_config_value!(String);
 impl_from_config_value!(bool);
 impl_from_config_value!(i8);

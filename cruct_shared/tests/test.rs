@@ -169,7 +169,7 @@ fn config_builder_applies_dummy_source_last() -> Result<(), ParserError> {
     Ok(())
 }
 
-#[cfg(feature = "cli")]
+#[cfg(feature = "clap")]
 mod cli_source_tests {
     use clap::{Arg, Command};
     use cruct_shared::ConfigValue;

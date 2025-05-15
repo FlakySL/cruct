@@ -1,5 +1,5 @@
 {
-  description = "Flake configuration file for translatable.rs development.";
+  description = "Flake configuration file for cruct development.";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     crane.url = "github:ipetkov/crane";
@@ -7,45 +7,38 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs =
-    {
-      nixpkgs,
-      flake-utils,
-      fenix,
-      ...
-    }@inputs:
-    flake-utils.lib.eachDefaultSystem (
-      system:
+  outputs = { nixpkgs, flake-utils, fenix, ... }@inputs:
+    flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
         crane = inputs.crane.mkLib pkgs;
+        toolchainToml = ./rust-toolchain.toml;
 
-        toolchain =
-          with fenix.packages.${system};
-          combine [
-            minimal.rustc
-            minimal.cargo
-            complete.rust-analyzer
-            complete.rust-src
-            complete.rustfmt
-            complete.clippy
-          ];
+        # Determine the Rust toolchain
+        toolchain = with fenix.packages.${system};
+          (if builtins.pathExists toolchainToml then
+            fromToolchainFile {
+              file = toolchainToml;
+              sha256 = "sha256-X/4ZBHO3iW0fOenQ3foEvscgAPJYl2abspaBThDOukI=";
+            }
+          else
+            combine [
+              stable.rustc
+              stable.rust-src
+              stable.cargo
+              complete.rustfmt
+              stable.clippy
+              stable.rust-analyzer
+              stable.llvm-tools-preview
+            ]);
 
+        # Override the toolchain in crane
         craneLib = crane.overrideToolchain toolchain;
-      in
-      {
+      in {
         devShells.default = craneLib.devShell {
-          packages = with pkgs; [
-            toolchain
-            rustfmt
-            clippy
-            qemu-user
-          ];
+          packages = with pkgs; [ toolchain cargo-llvm-cov cargo-nextest ];
 
-          env = {
-            LAZYVIM_RUST_DIAGNOSTICS = "bacon-ls";
-          };
+          env = { LAZYVIM_RUST_DIAGNOSTICS = "bacon-ls"; };
         };
-      }
-    );
+      });
 }

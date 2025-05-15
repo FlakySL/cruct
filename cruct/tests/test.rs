@@ -2,7 +2,10 @@ use cruct::{ConfigValue, FromConfigValue, ParserError, cruct};
 
 #[test]
 fn test_toml_loading() {
-    #[cruct(path = "./tests/fixtures/test_config.toml", format = "Toml")]
+    #[cruct(
+        load_config(path = "./tests/fixtures/test_config.toml", format = "Toml", priority = 0),
+        load_config(path = "./tests/fixtures/test_config.json", format = "Json", priority = 1)
+    )]
     #[derive(Debug, PartialEq)]
     struct TestToml {
         #[field(name = "else")]
@@ -17,7 +20,7 @@ fn test_toml_loading() {
 
 #[test]
 fn test_json_loading() {
-    #[cruct(path = "./tests/fixtures/test_config.json", format = "Json")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.json", format = "Json"))]
     #[derive(Debug, PartialEq)]
     struct TestJson {
         #[field(name = "else")]
@@ -32,7 +35,7 @@ fn test_json_loading() {
 
 #[test]
 fn test_yaml_loading() {
-    #[cruct(path = "./tests/fixtures/test_config.yml", format = "Yml")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.yml", format = "Yml"))]
     #[derive(Debug, PartialEq)]
     struct TestYaml {
         #[field(name = "else")]
@@ -47,7 +50,7 @@ fn test_yaml_loading() {
 
 #[test]
 fn test_default_values() {
-    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
     #[derive(Debug)]
     struct TestDefault {
         #[field(name = "missing_field", default = "default value".to_string())]
@@ -60,7 +63,7 @@ fn test_default_values() {
 
 #[test]
 fn test_missing_field() {
-    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
     #[derive(Debug)]
     #[allow(dead_code)]
     pub struct TestMissing {
@@ -79,7 +82,7 @@ fn test_missing_field() {
 
 #[test]
 fn test_env_override() {
-    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
     #[derive(Debug, PartialEq)]
     struct TestEnv {
         #[field(env_override = "TEST_HTTP_PORT")]
@@ -100,7 +103,7 @@ fn test_env_override() {
 
 #[test]
 fn test_case_insensitive() {
-    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
     #[derive(Debug, PartialEq)]
     struct TestInsensitive {
         #[field(name = "HTTP_PORT", insensitive = true)]
@@ -117,28 +120,28 @@ fn get_default_from_fn() -> String {
 
 #[test]
 fn test_enhanced_defaults() {
-    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
     #[derive(Debug, PartialEq)]
     struct TestStringDefault {
         #[field(default = "literal_default".to_string())]
         field: String,
     }
 
-    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
     #[derive(Debug, PartialEq)]
     struct TestFnDefault {
         #[field(default = get_default_from_fn())]
         field: String,
     }
 
-    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
     #[derive(Debug, PartialEq)]
     struct TestExprDefault {
         #[field(default = format!("{}-{}", "expr", 42))]
         field: String,
     }
 
-    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
     #[derive(Debug, PartialEq)]
     struct TestNumericDefault {
         #[field(default = 9000)]
@@ -160,7 +163,7 @@ fn test_enhanced_defaults() {
 
 #[test]
 fn test_default_with_environment() {
-    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
     #[derive(Debug, PartialEq)]
     struct TestCombined {
         #[field(
@@ -181,8 +184,9 @@ fn test_default_with_environment() {
 }
 
 #[test]
+#[allow(clippy::bool_assert_comparison)]
 fn test_default_with_type_conversion() {
-    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
     #[derive(Debug, PartialEq)]
     struct TestTypeConversion {
         #[field(default = std::f64::consts::PI)]
@@ -199,7 +203,7 @@ fn test_default_with_type_conversion() {
 
 #[test]
 fn test_array_toml() {
-    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
     #[derive(Debug, PartialEq)]
     struct ArrayToml {
         items: Vec<String>,
@@ -213,7 +217,7 @@ fn test_array_toml() {
 
 #[test]
 fn test_array_json() {
-    #[cruct(path = "./tests/fixtures/test_config.json", format = "Json")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.json", format = "Json"))]
     #[derive(Debug, PartialEq)]
     struct ArrayJson {
         items: Vec<String>,
@@ -227,7 +231,7 @@ fn test_array_json() {
 
 #[test]
 fn test_array_yaml() {
-    #[cruct(path = "./tests/fixtures/test_config.yml", format = "Yml")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.yml", format = "Yml"))]
     #[derive(Debug, PartialEq)]
     struct ArrayYaml {
         items: Vec<String>,
@@ -241,7 +245,7 @@ fn test_array_yaml() {
 
 #[test]
 fn test_nested_array_toml() {
-    #[cruct(path = "./tests/fixtures/test_config.toml")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
     #[derive(Debug, PartialEq)]
     struct NestedArrayToml {
         matrix: Vec<Vec<u16>>,
@@ -253,7 +257,7 @@ fn test_nested_array_toml() {
 
 #[test]
 fn test_nested_array_json() {
-    #[cruct(path = "./tests/fixtures/test_config.json", format = "Json")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.json", format = "Json"))]
     #[derive(Debug, PartialEq)]
     struct NestedArrayJson {
         matrix: Vec<Vec<u16>>,
@@ -265,7 +269,7 @@ fn test_nested_array_json() {
 
 #[test]
 fn test_nested_array_yaml() {
-    #[cruct(path = "./tests/fixtures/test_config.yml", format = "Yml")]
+    #[cruct(load_config(path = "./tests/fixtures/test_config.yml", format = "Yml"))]
     #[derive(Debug, PartialEq)]
     struct NestedArrayYaml {
         matrix: Vec<Vec<u16>>,
@@ -275,28 +279,28 @@ fn test_nested_array_yaml() {
     assert_eq!(cfg.matrix, vec![vec![1, 2], vec![3, 4]]);
 }
 
-#[cruct(path = "./tests/fixtures/test_config.toml")]
-#[derive(Debug, PartialEq)]
-struct SomeStruct {
-    items: Vec<String>,
-    numbers: Vec<u16>,
-}
-
-impl FromConfigValue for SomeStruct {
-    fn from_config_value(value: &ConfigValue) -> Result<Self, ParserError> {
-        SomeStruct::load_from(value)
-    }
-}
-
-#[cruct(path = "./tests/fixtures/test_config.toml")]
-#[derive(Debug, PartialEq)]
-struct NestedConfig {
-    http_port: u16,
-    nested: SomeStruct,
-}
-
 #[test]
 fn test_nested_struct_toml() {
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
+    #[derive(Debug, PartialEq)]
+    struct SomeStruct {
+        items: Vec<String>,
+        numbers: Vec<u16>,
+    }
+
+    impl FromConfigValue for SomeStruct {
+        fn from_config_value(value: &ConfigValue) -> Result<Self, ParserError> {
+            SomeStruct::load_from(value)
+        }
+    }
+
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml"))]
+    #[derive(Debug, PartialEq)]
+    struct NestedConfig {
+        http_port: u16,
+        nested: SomeStruct,
+    }
+
     let cfg = NestedConfig::load().unwrap();
 
     assert_eq!(cfg.http_port, 8080);
@@ -310,25 +314,33 @@ fn test_nested_struct_toml() {
     );
 }
 
-#[cruct(path = "./tests/fixtures/test_config.toml", format = "Toml")]
-#[derive(Debug, PartialEq)]
-struct TestTomlLoad {
-    #[field(name = "else")]
-    something: String,
-    http_port: u16,
-}
-
 #[test]
 fn test_macro_load_without_cli() {
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml", format = "Toml"))]
+    #[derive(Debug, PartialEq)]
+    struct TestTomlLoad {
+        #[field(name = "else")]
+        something: String,
+        http_port: u16,
+    }
+
     let cfg = TestTomlLoad::load().unwrap();
     assert_eq!(cfg.something, "toml value");
     assert_eq!(cfg.http_port, 8080);
 }
 
-#[cfg(feature = "cli")]
+#[cfg(feature = "clap")]
 #[test]
 fn test_macro_load_with_cli_feature_enabled() {
-    // Even with `cli` feature on, no flags means behavior is unchanged
+    // Even with `clap` feature on, no flags means behavior is unchanged
+    #[cruct(load_config(path = "./tests/fixtures/test_config.toml", format = "Toml"))]
+    #[derive(Debug, PartialEq)]
+    struct TestTomlLoad {
+        #[field(name = "else")]
+        something: String,
+        http_port: u16,
+    }
+
     let cfg = TestTomlLoad::load().unwrap();
     assert_eq!(cfg.something, "toml value");
     assert_eq!(cfg.http_port, 8080);
