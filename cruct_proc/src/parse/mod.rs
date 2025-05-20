@@ -4,6 +4,9 @@ mod field_params;
 mod field_struct;
 mod macro_params;
 
+#[cfg(test)]
+mod tests;
+
 pub use field_params::FieldParams;
 pub use field_struct::{StructField, remove_field_attrs};
 pub use macro_params::MacroParams;

@@ -7,8 +7,9 @@
 //! ```ignore
 //! use cruct::cruct;
 //!
-//! #[cruct(path = "config.toml")]
+//! #[cruct(load_config(path = "tests/config.toml"))]
 //! struct Config {
+//!     #[field(default = 8080)]
 //!     http_port: u16,
 //!     database_url: String,
 //! }

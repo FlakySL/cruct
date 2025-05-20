@@ -1,5 +1,9 @@
 use cruct::{ConfigValue, FromConfigValue, ParserError, cruct};
 
+mod integration;
+mod e2e;
+// mod unit;
+
 #[test]
 fn test_toml_loading() {
     #[cruct(
@@ -452,7 +456,8 @@ fn missing_field_errors() {
 
     assert!(result.is_err());
     if let Err(e) = result {
-        let field = String::from("name");
-        assert!(matches!(e, ParserError::MissingField(field)));
+        let field = String::from("present");
+        let expected = ParserError::MissingField(field).to_string();
+        assert_eq!(e.to_string(), expected);
     }
 }

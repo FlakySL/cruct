@@ -15,9 +15,9 @@ mod parse;
 ///
 /// # Usage
 /// ```ignore
-/// #[cruct(path = "config.toml", format = "Toml")]
+/// #[cruct(load_config(path = "config.toml", format = "Toml"))]
 /// struct Config {
-///     #[field(name = "http_port")]
+///     #[field(name = "http_port", default = 8080)]
 ///     port: u16,
 /// }
 /// ```

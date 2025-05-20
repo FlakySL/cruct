@@ -6,5 +6,3 @@ edition = "2024"
 [dependencies]
 cruct_proc = { path = "../cruct_proc" }
 cruct_shared = { path = "../cruct_shared" }
-
-thiserror = "2.0.12"

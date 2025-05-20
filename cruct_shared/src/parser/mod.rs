@@ -13,6 +13,9 @@ mod json;
 mod tml;
 mod yml;
 
+#[cfg(test)]
+mod tests;
+
 use json::JsonParser;
 use tml::TomlParser;
 use yml::YmlParser;

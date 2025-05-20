@@ -52,6 +52,10 @@ pub fn generate_impl_block(
             }
         });
 
+    let configs_len = params
+        .configs
+        .len();
+
     quote! {
         pub struct #loader_name {
             builder: cruct_shared::ConfigBuilder,
@@ -74,6 +78,10 @@ pub fn generate_impl_block(
             pub fn with_config(mut self) -> Self {
                 #(#config_adds)*
                 self
+            }
+
+            pub fn configs(self) -> usize {
+                #configs_len
             }
 
             pub fn load(self) -> Result<#struct_name, cruct_shared::ParserError> {
