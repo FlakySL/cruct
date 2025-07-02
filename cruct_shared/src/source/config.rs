@@ -31,3 +31,20 @@ impl ConfigSource for ConfigFileSource {
         parser.load(&self.path)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::{ConfigFileSource, FileFormat};
+
+    #[test]
+    fn verify_extension_name() {
+        let src = ConfigFileSource::new("test.toml", Some(FileFormat::Toml));
+        let parser = src
+            .get_parser()
+            .expect("Failed to get parser");
+
+        let extensions = parser.extensions();
+
+        assert!(extensions.contains(&"toml"), "Expected 'toml' extension, found: {:?}", extensions);
+    }
+}
