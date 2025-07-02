@@ -9,16 +9,24 @@ use thiserror::Error as ThisError;
 use toml_edit::TomlError;
 use yaml_rust2::ScanError as YmlError;
 
+#[cfg(feature = "json")]
 mod json;
-mod tml;
-mod yml;
+
+#[cfg(feature = "toml")]
+mod toml;
+
+#[cfg(feature = "yaml")]
+mod yaml;
 
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "json")]
 use json::JsonParser;
-use tml::TomlParser;
-use yml::YmlParser;
+#[cfg(feature = "toml")]
+use toml::TomlParser;
+#[cfg(feature = "yaml")]
+use yaml::YmlParser;
 
 /// Enum representing possible errors during parsing.
 /// Utilizes the `thiserror` crate for error handling.
@@ -88,10 +96,13 @@ pub enum ParserError {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FileFormat {
     /// YML/YAML file format identifier.
+    #[cfg(feature = "yaml")]
     Yml,
     /// JSON file format identifier.
+    #[cfg(feature = "json")]
     Json,
     /// TOML file format identifier.
+    #[cfg(feature = "toml")]
     Toml,
 }
 
@@ -105,8 +116,13 @@ impl FromStr for FileFormat {
             .to_lowercase()
             .as_str()
         {
+            #[cfg(feature = "yaml")]
             "yml" | "yaml" => Ok(FileFormat::Yml),
+
+            #[cfg(feature = "json")]
             "json" => Ok(FileFormat::Json),
+
+            #[cfg(feature = "toml")]
             "toml" => Ok(FileFormat::Toml),
             _ => Err(ParserError::InvalidFileFormat(s.into())),
         }
@@ -118,8 +134,13 @@ impl FromStr for FileFormat {
 impl Display for FileFormat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            #[cfg(feature = "yaml")]
             FileFormat::Yml => write!(f, "yaml"),
+
+            #[cfg(feature = "json")]
             FileFormat::Json => write!(f, "json"),
+
+            #[cfg(feature = "toml")]
             FileFormat::Toml => write!(f, "toml"),
         }
     }
@@ -144,8 +165,13 @@ pub trait Parser: Send + Sync {
     /// Returns the file format associated with this parser.
     fn format(&self) -> FileFormat {
         match self.extensions()[0] {
+            #[cfg(feature = "yaml")]
             "yml" | "yaml" => FileFormat::Yml,
+
+            #[cfg(feature = "json")]
             "json" => FileFormat::Json,
+
+            #[cfg(feature = "toml")]
             "toml" => FileFormat::Toml,
             _ => panic!("Unsupported file format"),
         }
@@ -161,8 +187,13 @@ pub trait Parser: Send + Sync {
 /// Returns an `Option` containing the parser if the extension is supported.
 pub fn get_parser(ext: &str) -> Result<Arc<dyn Parser>, ParserError> {
     match ext {
+        #[cfg(feature = "yaml")]
         "yml" | "yaml" => Ok(Arc::new(YmlParser)),
+
+        #[cfg(feature = "json")]
         "json" => Ok(Arc::new(JsonParser)),
+
+        #[cfg(feature = "toml")]
         "toml" => Ok(Arc::new(TomlParser)),
         _ => Err(ParserError::InvalidFileFormat(ext.into())),
     }

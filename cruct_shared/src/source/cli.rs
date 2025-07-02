@@ -18,16 +18,9 @@ impl CliSource {
 
     /// Retrieves the command-line arguments.
     fn get_args() -> Vec<String> {
-        if let Ok(test_args) = env::var("RUST_TEST_ARGS") {
-            test_args
-                .split_whitespace()
-                .map(|s| s.to_string())
-                .collect()
-        } else {
-            env::args()
-                .skip(1)
-                .collect()
-        }
+        env::args()
+            .skip(1)
+            .collect()
     }
 }
 

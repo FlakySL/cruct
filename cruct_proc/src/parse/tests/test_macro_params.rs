@@ -12,6 +12,7 @@ fn parse_single_load_config() {
             .len(),
         1
     );
+
     let cfg = &params.configs[0];
     assert_eq!(cfg.path, "a.toml");
     assert_eq!(

@@ -1,3 +1,9 @@
+mod test_arrays;
+mod test_case_insensitive;
 mod test_error_cases;
 mod test_loader_flow;
+mod test_loading;
 mod test_macro_api;
+mod test_missing_field;
+mod test_nested_structures;
+// mod test_scalar_types;

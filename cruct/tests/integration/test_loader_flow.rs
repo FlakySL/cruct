@@ -1,6 +1,9 @@
+use assay::assay;
 use cruct::cruct;
 
-#[test]
+#[assay(
+    include = ["tests/fixtures/integration/basic.toml"],
+)]
 fn loads_values_from_toml_and_env() {
     #[cruct(load_config(path = "tests/fixtures/integration/basic.toml"))]
     #[derive(Debug)]
@@ -20,6 +23,7 @@ fn loads_values_from_toml_and_env() {
         .with_config()
         .load()
         .unwrap();
+
     assert_eq!(cfg.name, "from_file");
     assert_eq!(cfg.count, 100);
 
@@ -36,7 +40,12 @@ fn loads_values_from_toml_and_env() {
     assert_eq!(cfg2.name, "env_name");
 }
 
-#[test]
+#[assay(
+    include = [
+        "tests/fixtures/integration/nested.toml",
+        "tests/fixtures/integration/basic.toml"
+    ],
+)]
 fn loader_respects_priority_order() {
     #[cruct(
         load_config(path = "tests/fixtures/integration/basic.toml", priority = 5),

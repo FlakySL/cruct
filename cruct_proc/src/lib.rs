@@ -14,7 +14,9 @@ mod parse;
 /// Macro to load configuration files into Rust structs.
 ///
 /// # Usage
-/// ```ignore
+/// ```
+/// use cruct_proc::cruct;
+///
 /// #[cruct(load_config(path = "config.toml", format = "Toml"))]
 /// struct Config {
 ///     #[field(name = "http_port", default = 8080)]

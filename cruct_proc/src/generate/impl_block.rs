@@ -40,8 +40,13 @@ pub fn generate_impl_block(
         .map(|cfg| {
             let path_lit = LitStr::new(&cfg.path, Span::call_site());
             let format_ts = match &cfg.format {
+                #[cfg(feature = "json")]
                 Some(FileFormat::Json) => quote! { Some(cruct_shared::FileFormat::Json) },
+
+                #[cfg(feature = "toml")]
                 Some(FileFormat::Toml) => quote! { Some(cruct_shared::FileFormat::Toml) },
+
+                #[cfg(feature = "yaml")]
                 Some(FileFormat::Yml) => quote! { Some(cruct_shared::FileFormat::Yml) },
                 None => quote! { None },
             };
@@ -51,10 +56,6 @@ pub fn generate_impl_block(
                 );
             }
         });
-
-    let configs_len = params
-        .configs
-        .len();
 
     quote! {
         pub struct #loader_name {
@@ -78,10 +79,6 @@ pub fn generate_impl_block(
             pub fn with_config(mut self) -> Self {
                 #(#config_adds)*
                 self
-            }
-
-            pub fn configs(self) -> usize {
-                #configs_len
             }
 
             pub fn load(self) -> Result<#struct_name, cruct_shared::ParserError> {

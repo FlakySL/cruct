@@ -1,11 +1,15 @@
+use assay::assay;
 use cruct::cruct;
 
-#[test]
+#[assay(
+    include = ["tests/fixtures/integration/cli.toml"],
+)]
 fn cli_override_takes_highest_priority() {
     #[cruct(load_config(path = "tests/fixtures/basic.toml"))]
     #[derive(Debug)]
     struct C {
-        #[field(default = 1, shell_override = "")]
+        // TODO: implement shell overrides
+        #[field(default = 1, shell_override = "number")]
         n: u32,
     }
 

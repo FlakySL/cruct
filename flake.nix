@@ -7,38 +7,50 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { nixpkgs, flake-utils, fenix, ... }@inputs:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      nixpkgs,
+      flake-utils,
+      fenix,
+      ...
+    }@inputs:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
         crane = inputs.crane.mkLib pkgs;
-        toolchainToml = ./rust-toolchain.toml;
 
         # Determine the Rust toolchain
-        toolchain = with fenix.packages.${system};
-          (if builtins.pathExists toolchainToml then
-            fromToolchainFile {
-              file = toolchainToml;
-              sha256 = "sha256-X/4ZBHO3iW0fOenQ3foEvscgAPJYl2abspaBThDOukI=";
-            }
-          else
-            combine [
-              stable.rustc
-              stable.rust-src
-              stable.cargo
-              complete.rustfmt
-              stable.clippy
-              stable.rust-analyzer
-              stable.llvm-tools-preview
-            ]);
+        toolchain =
+          with fenix.packages.${system};
+          combine [
+            stable.rustc
+            stable.rust-src
+            stable.cargo
+            complete.rustfmt
+            stable.clippy
+            stable.rust-analyzer
+            stable.llvm-tools-preview
+          ];
 
         # Override the toolchain in crane
         craneLib = crane.overrideToolchain toolchain;
-      in {
+      in
+      {
         devShells.default = craneLib.devShell {
-          packages = with pkgs; [ toolchain cargo-llvm-cov cargo-nextest ];
+          packages = with pkgs; [
+            toolchain
+            cargo-llvm-cov
+            llvmPackages_19.libllvm
+            grcov
+            cargo-nextest
+            gnumake
+          ];
 
-          env = { LAZYVIM_RUST_DIAGNOSTICS = "bacon-ls"; };
+          env = {
+            LAZYVIM_RUST_DIAGNOSTICS = "bacon-ls";
+          };
         };
-      });
+      }
+    );
 }

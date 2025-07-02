@@ -3,6 +3,12 @@ name = "cruct_proc"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = ["toml"]
+toml = ["cruct_shared/toml"]
+yaml = ["cruct_shared/yaml"]
+json = ["cruct_shared/json"]
+
 [lib]
 proc-macro = true
 

@@ -1,6 +1,8 @@
 name = "file_name"
 count = 123
 
+database_url = "postgres://user:password@localhost/dbname"
+
 else = "toml value"
 http_port = 8080
 

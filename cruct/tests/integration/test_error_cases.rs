@@ -1,9 +1,11 @@
+use assay::assay;
 use cruct::cruct;
 
 #[test]
 fn missing_file_returns_error() {
     #[cruct(load_config(path = "tests/fixtures/does_not_exist.toml"))]
     #[derive(Debug)]
+    #[allow(dead_code)]
     struct E {
         a: String,
     }
@@ -19,10 +21,13 @@ fn missing_file_returns_error() {
     );
 }
 
-#[test]
+#[assay(
+    include = ["tests/fixtures/integration/invalid.toml"],
+)]
 fn invalid_toml_syntax_error() {
     #[cruct(load_config(path = "tests/fixtures/integration/invalid.toml"))]
     #[derive(Debug)]
+    #[allow(dead_code)]
     struct F {
         a: String,
     }

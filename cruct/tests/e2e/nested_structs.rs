@@ -1,6 +1,9 @@
+use assay::assay;
 use cruct::{ConfigValue, FromConfigValue, ParserError, cruct};
 
-#[test]
+#[assay(
+    include = ["tests/fixtures/e2e/nested.toml"],
+)]
 fn nested_structs_load_correctly() {
     #[cruct(load_config(path = "tests/fixtures/e2e/nested.toml"))]
     #[derive(Debug)]
