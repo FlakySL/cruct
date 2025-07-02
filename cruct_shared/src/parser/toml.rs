@@ -137,6 +137,14 @@ mod test {
     }
 
     #[test]
+    fn test_parse_toml_value_datetime() {
+        let value = Value::Datetime(Formatted::new(Date { year: 2023, month: 10, day: 1 }.into()));
+        let result = parse_toml_value(&value).unwrap();
+
+        assert_eq!(result, ConfigValue::Value("2023-10-01".to_string()));
+    }
+
+    #[test]
     fn test_parse_toml_array() {
         let value = Value::Array(Array::from_iter(vec![
             Value::String(Formatted::new("item1".into())),
@@ -208,14 +216,6 @@ mod test {
                 ConfigValue::Section(expected_map2)
             ])
         );
-    }
-
-    #[test]
-    fn test_parse_toml_datetime() {
-        let value = Value::Datetime(Formatted::new(Date { year: 2023, month: 10, day: 1 }.into()));
-        let result = parse_toml_value(&value).unwrap();
-
-        assert_eq!(result, ConfigValue::Value("2023-10-01".to_string()));
     }
 
     #[test]
