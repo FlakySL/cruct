@@ -16,8 +16,8 @@ pub struct LoadConfig {
     /// **The query can only return one file**
     pub path: String,
 
-    /// Which is the file format that should be used to parse the
-    /// configuration file.
+    /// Which is the file format that should be used to parse the configuration
+    /// file.
     pub format: Option<FileFormat>,
 
     /// A priority for the configuration file. The lower the number, the
