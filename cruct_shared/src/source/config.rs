@@ -31,13 +31,12 @@ impl ConfigSource for ConfigFileSource {
         parser.load(&self.path)
     }
 }
-
 #[cfg(test)]
 mod test {
     use crate::{ConfigFileSource, FileFormat};
 
     #[test]
-    fn verify_extension_name() {
+    fn test_toml_parser_extensions() {
         let src = ConfigFileSource::new("test.toml", Some(FileFormat::Toml));
         let parser = src
             .get_parser()
@@ -46,5 +45,29 @@ mod test {
         let extensions = parser.extensions();
 
         assert!(extensions.contains(&"toml"), "Expected 'toml' extension, found: {:?}", extensions);
+    }
+
+    #[test]
+    fn test_json_parser_extensions() {
+        let src = ConfigFileSource::new("test.json", Some(FileFormat::Json));
+        let parser = src
+            .get_parser()
+            .expect("Failed to get parser");
+
+        let extensions = parser.extensions();
+
+        assert!(extensions.contains(&"json"), "Expected 'json' extension, found: {:?}", extensions);
+    }
+
+    #[test]
+    fn test_yaml_parser_extensions() {
+        let src = ConfigFileSource::new("test.yaml", Some(FileFormat::Yml));
+        let parser = src
+            .get_parser()
+            .expect("Failed to get parser");
+
+        let extensions = parser.extensions();
+
+        assert!(extensions.contains(&"yaml"), "Expected 'yaml' extension, found: {:?}", extensions);
     }
 }
