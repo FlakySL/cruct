@@ -22,8 +22,8 @@ pub struct FieldParams {
     /// A default value for the field.
     pub default: Option<Expr>,
 
-    // TODO: add a shell override
-    pub shell_override: Option<String>,
+    /// An argument override for the field, used to set the value
+    pub arg_override: Option<String>,
 }
 
 impl Parse for FieldParams {
@@ -34,7 +34,7 @@ impl Parse for FieldParams {
         let mut default = None;
         let mut insensitive = None;
         let mut env_override = None;
-        let mut shell_override = None;
+        let mut arg_override = None;
 
         for param in params {
             let key = param
@@ -55,15 +55,15 @@ impl Parse for FieldParams {
                     env_override = Some(value.value());
                 },
 
-                ("shell_override", Expr::Lit(ExprLit { lit: Lit::Str(value), .. })) => {
-                    shell_override = Some(value.value());
+                ("arg_override", Expr::Lit(ExprLit { lit: Lit::Str(value), .. })) => {
+                    arg_override = Some(value.value());
                 },
 
                 ("default", value) => {
                     default = Some(value.clone());
                 },
 
-                (name @ ("name" | "insensitive" | "env_override" | "shell_override"), value) => {
+                (name @ ("name" | "insensitive" | "env_override" | "arg_override"), value) => {
                     Err(SynError::new_spanned(
                         value,
                         format!(
@@ -71,6 +71,7 @@ impl Parse for FieldParams {
                             match name {
                                 "name" => "&str",
                                 "insensitive" => "bool",
+                                "arg_override" => "&str",
                                 "env_override" => "&str",
                                 _ => "",
                             }
@@ -92,7 +93,7 @@ impl Parse for FieldParams {
             name,
             insensitive: insensitive.unwrap_or(false),
             env_override,
-            shell_override,
+            arg_override,
             default,
         })
     }

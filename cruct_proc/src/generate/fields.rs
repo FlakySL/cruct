@@ -22,6 +22,23 @@ pub fn generate_field_initialization(
         })
         .unwrap_or_else(|| quote! { None });
 
+    let arg_check = field
+        .arg_override
+        .as_ref()
+        .map(|flag| {
+            quote! {
+                std::env::args()
+                    .skip(1)
+                    .find_map(|arg| {
+                        let prefix = concat!("--", #flag, "=");
+
+                        arg.strip_prefix(prefix)
+                           .map(|v| cruct_shared::parser::ConfigValue::Value(v.to_string()))
+                    })
+            }
+        })
+        .unwrap_or_else(|| quote! { None });
+
     let config_lookup = if field.insensitive {
         quote! {
             section.iter()
@@ -34,8 +51,10 @@ pub fn generate_field_initialization(
         }
     };
 
+    // Priority: CLI arg override → env_override → config file lookup
     let value_source = quote! {
-        #env_check
+        #arg_check
+            .or_else(|| #env_check)
             .or_else(|| #config_lookup)
     };
 

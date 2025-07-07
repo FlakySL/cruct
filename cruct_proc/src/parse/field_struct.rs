@@ -65,25 +65,18 @@ impl StructField {
 }
 
 /// Check if the attribute's path is identified as "env_override",
-/// "shell_override", "name", "insensitive", "default" and "description"
+/// "arg_override", "name", "insensitive", "default" and "description"
 /// - "env_override" is used to override the field value from an environment
 ///   variable
-/// - "shell_override" is used to override the field value from a shell command
+/// - "arg_override" is used to override the field value from a command line
 /// - "name" is used to specify the name of the field in the configuration file
 /// - insensitive" is used to specify if the field name should be treated as
 ///   case-insensitive
 /// - description" is a metadata attribute that provides a description of the
 ///   field
 fn is_field_attr(attr: &Attribute) -> bool {
-    let allowed_attrs = [
-        "env_override",
-        "shell_override",
-        "name",
-        "insensitive",
-        "default",
-        "description",
-        "field",
-    ];
+    let allowed_attrs =
+        ["env_override", "arg_override", "name", "insensitive", "default", "description", "field"];
 
     attr.path()
         .get_ident()
