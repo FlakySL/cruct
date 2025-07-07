@@ -99,3 +99,16 @@ fn parse_invalid_macro_params() {
         );
     }
 }
+
+#[test]
+fn parse_invalid_file_format() {
+    let src = r#"load_config(format = "xml")"#;
+    let params: Result<MacroParams> = parse_str(src);
+
+    if let Err(e) = params {
+        assert_eq!(
+            e.to_string(),
+            "invalid file format: 'xml' is not a valid file format".to_string()
+        );
+    }
+}
