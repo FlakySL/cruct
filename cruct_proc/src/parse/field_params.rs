@@ -75,11 +75,11 @@ impl Parse for FieldParams {
                                 "arg_override" => "&str",
                                 "env_override" => "&str",
 
-                                &_ => compile_error!(format!(
+                                &_ => panic!(
                                     "Technically, you should not be able to see this error, but \
                                      if you do, please let us know. The key that caused this \
                                      error is: '{name}'."
-                                )),
+                                ),
                             }
                         ),
                     ))?
