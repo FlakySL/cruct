@@ -69,11 +69,17 @@ impl Parse for FieldParams {
                         format!(
                             "Invalid value type for '{name}' expected '{}'",
                             match name {
+                                // Do not forget to add new parameters here
                                 "name" => "&str",
                                 "insensitive" => "bool",
                                 "arg_override" => "&str",
                                 "env_override" => "&str",
-                                _ => "",
+
+                                &_ => compile_error!(format!(
+                                    "Technically, you should not be able to see this error, but \
+                                     if you do, please let us know. The key that caused this \
+                                     error is: '{name}'."
+                                )),
                             }
                         ),
                     ))?

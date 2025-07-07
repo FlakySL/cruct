@@ -12,9 +12,6 @@ fn name_invalid_value() {
     }
 }
 
-// (name @ ("name" | "insensitive" | "env_override" | "arg_override"), value) =>
-// {
-
 #[test]
 fn insensitive_invalid_value() {
     let src = r#"insensitive = "true""#;
