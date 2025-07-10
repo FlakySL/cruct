@@ -4,10 +4,7 @@ use std::io::Error as StdError;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use jzon::Error as JsonError;
 use thiserror::Error as ThisError;
-use toml_edit::TomlError;
-use yaml_rust2::ScanError as YmlError;
 
 #[cfg(feature = "json")]
 mod json;
@@ -71,18 +68,21 @@ pub enum ParserError {
 
     /// Represents a failure in parsing a TOML file.
     /// Occurs when the parser encounters invalid TOML syntax or structure.
+    #[cfg(feature = "toml")]
     #[error("TOML parsing error: {0}")]
-    TomlError(#[from] TomlError),
+    TomlError(#[from] toml_edit::TomlError),
 
     /// Represents a failure in parsing a JSON file.
     /// Triggered by invalid JSON syntax or structure during parsing.
+    #[cfg(feature = "json")]
     #[error("JSON parsing error: {0}")]
-    JsonError(#[from] JsonError),
+    JsonError(#[from] jzon::Error),
 
     /// Represents a failure in parsing a YAML file.
     /// Triggered by invalid YAML syntax or structure during parsing.
+    #[cfg(feature = "yaml")]
     #[error("YAML parsing error: {0}")]
-    YmlError(#[from] YmlError),
+    YmlError(#[from] yaml_rust2::ScanError),
 }
 
 /// Represents the supported file formats for configuration parsing.
@@ -183,13 +183,13 @@ pub trait Parser: Send + Sync {
 pub fn get_parser(ext: &str) -> Result<Arc<dyn Parser>, ParserError> {
     match ext {
         #[cfg(feature = "yaml")]
-        "yml" | "yaml" => Ok(Arc::new(YmlParser)),
+        "yml" | "yaml" => Ok(Arc::new(crate::parser::yaml::YmlParser)),
 
         #[cfg(feature = "json")]
-        "json" => Ok(Arc::new(JsonParser)),
+        "json" => Ok(Arc::new(crate::parser::json::JsonParser)),
 
         #[cfg(feature = "toml")]
-        "toml" => Ok(Arc::new(TomlParser)),
+        "toml" => Ok(Arc::new(crate::parser::toml::TomlParser)),
 
         _ => Err(ParserError::InvalidFileFormat(ext.into())),
     }
