@@ -1,8 +1,9 @@
 use assay::assay;
 use cruct::cruct;
 
+#[cfg(unix)]
 #[test]
-fn missing_file_returns_error() {
+fn missing_file_returns_error_unix() {
     #[cruct(load_config(path = "tests/fixtures/does_not_exist.toml"))]
     #[derive(Debug)]
     #[allow(dead_code)]
@@ -15,10 +16,25 @@ fn missing_file_returns_error() {
         .load()
         .unwrap_err();
 
-    assert!(
-        err.to_string()
-            .contains("No such file")
-    );
+    assert_eq!(err.to_string(), "No such file or directory (os error 2)");
+}
+
+#[cfg(windows)]
+#[test]
+fn missing_file_returns_error_windows() {
+    #[cruct(load_config(path = "tests/fixtures/does_not_exist.toml"))]
+    #[derive(Debug)]
+    #[allow(dead_code)]
+    struct E {
+        a: String,
+    }
+
+    let err = E::loader()
+        .with_config()
+        .load()
+        .unwrap_err();
+
+    assert_eq!(err.to_string(), "The system cannot find the file specified. (os error 2)");
 }
 
 #[assay(
