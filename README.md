@@ -12,7 +12,7 @@
 
 # Cruct
 
-A procedural macro for loading configuration files into Rust structs with compile‑time validation and type safety :contentReference[oaicite:0]{index=0}.
+A procedural macro for loading configuration files into Rust structs with compile‑time validation and type safety.
 
 ## Features
 
