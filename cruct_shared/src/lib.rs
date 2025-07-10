@@ -1,4 +1,5 @@
 pub mod parser;
+pub mod source;
 
 pub use parser::{
     ConfigValue,
@@ -6,5 +7,7 @@ pub use parser::{
     FromConfigValue,
     Parser,
     ParserError,
-    get_parser_by_extension,
+    YmlParser,
+    get_parser,
 };
+pub use source::{CliSource, ConfigBuilder, ConfigFileSource, ConfigSource};

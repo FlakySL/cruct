@@ -4,16 +4,20 @@
 //! with compile-time validation and type safety.
 //!
 //! # Example
-//! ```ignore
+//! ```
 //! use cruct::cruct;
 //!
-//! #[cruct(path = "config.toml")]
+//! #[cruct(load_config(path = "tests/fixtures/test_config.toml"))]
 //! struct Config {
+//!     #[field(default = 8080)]
 //!     http_port: u16,
 //!     database_url: String,
 //! }
 //!
-//! let config = Config::load()?;
+//! let cfg = Config::loader()
+//!     .with_config()
+//!     .load()
+//!     .unwrap();
 //! ```
 
 pub use cruct_proc::cruct;

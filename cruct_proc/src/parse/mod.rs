@@ -4,6 +4,9 @@ mod field_params;
 mod field_struct;
 mod macro_params;
 
+#[cfg(test)]
+mod tests;
+
 pub use field_params::FieldParams;
 pub use field_struct::{StructField, remove_field_attrs};
 pub use macro_params::MacroParams;
@@ -32,11 +35,4 @@ pub enum ParameterError {
         /// An identifier for the found type. (not enforced)
         found: String,
     },
-
-    /// This error is used when the macro
-    #[error(
-        "Couldn't infer the file type, please specify using `type = <type>` when invoking the \
-         macro"
-    )]
-    AmbiguousFileType,
 }

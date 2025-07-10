@@ -21,6 +21,9 @@ pub struct FieldParams {
 
     /// A default value for the field.
     pub default: Option<Expr>,
+
+    /// An argument override for the field, used to set the value
+    pub arg_override: Option<String>,
 }
 
 impl Parse for FieldParams {
@@ -31,6 +34,7 @@ impl Parse for FieldParams {
         let mut default = None;
         let mut insensitive = None;
         let mut env_override = None;
+        let mut arg_override = None;
 
         for param in params {
             let key = param
@@ -51,20 +55,31 @@ impl Parse for FieldParams {
                     env_override = Some(value.value());
                 },
 
+                ("arg_override", Expr::Lit(ExprLit { lit: Lit::Str(value), .. })) => {
+                    arg_override = Some(value.value());
+                },
+
                 ("default", value) => {
                     default = Some(value.clone());
                 },
 
-                (name @ ("name" | "insensitive" | "env_override"), value) => {
+                (name @ ("name" | "insensitive" | "env_override" | "arg_override"), value) => {
                     Err(SynError::new_spanned(
                         value,
                         format!(
                             "Invalid value type for '{name}' expected '{}'",
                             match name {
+                                // Do not forget to add new parameters here
                                 "name" => "&str",
                                 "insensitive" => "bool",
+                                "arg_override" => "&str",
                                 "env_override" => "&str",
-                                _ => "",
+
+                                &_ => panic!(
+                                    "Technically, you should not be able to see this error, but \
+                                     if you do, please let us know. The key that caused this \
+                                     error is: '{name}'."
+                                ),
                             }
                         ),
                     ))?
@@ -84,6 +99,7 @@ impl Parse for FieldParams {
             name,
             insensitive: insensitive.unwrap_or(false),
             env_override,
+            arg_override,
             default,
         })
     }

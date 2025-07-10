@@ -4,6 +4,21 @@ use syn::{Ident, Type};
 
 use crate::parse::FieldParams;
 
+/// Generates code to initialize a field based on configuration sources.
+///
+/// This function constructs a token stream that initializes a field by checking
+/// values from multiple prioritized configuration sources: command line
+/// arguments, environment variables, and configuration files. If a value is not
+/// found in any of these sources, it either uses a default value (if provided)
+/// or throws an error for missing configuration.
+///
+/// * `field`: Metadata about the field being initialized, including its
+///   override options, default value, and case sensitivity.
+/// * `field_ident`: The identifier for the field in the generated code.
+/// * `config_key`: The key used to look up the field's value in the
+///   configuration sources.
+/// * `field_type`: The expected type of the field, which is used for parsing
+///   the configuration value.
 pub fn generate_field_initialization(
     field: &FieldParams,
     field_ident: &Ident,
@@ -22,6 +37,23 @@ pub fn generate_field_initialization(
         })
         .unwrap_or_else(|| quote! { None });
 
+    let arg_check = field
+        .arg_override
+        .as_ref()
+        .map(|flag| {
+            quote! {
+                std::env::args()
+                    .skip(1)
+                    .find_map(|arg| {
+                        let prefix = concat!("--", #flag, "=");
+
+                        arg.strip_prefix(prefix)
+                           .map(|v| cruct_shared::parser::ConfigValue::Value(v.to_string()))
+                    })
+            }
+        })
+        .unwrap_or_else(|| quote! { None });
+
     let config_lookup = if field.insensitive {
         quote! {
             section.iter()
@@ -34,8 +66,10 @@ pub fn generate_field_initialization(
         }
     };
 
+    // Priority: CLI arg override → env_override → config file lookup
     let value_source = quote! {
-        #env_check
+        #arg_check
+            .or_else(|| #env_check)
             .or_else(|| #config_lookup)
     };
 

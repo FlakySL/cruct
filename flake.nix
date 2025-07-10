@@ -1,5 +1,5 @@
 {
-  description = "Flake configuration file for translatable.rs development.";
+  description = "Flake configuration file for cruct development.";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     crane.url = "github:ipetkov/crane";
@@ -20,26 +20,30 @@
         pkgs = nixpkgs.legacyPackages.${system};
         crane = inputs.crane.mkLib pkgs;
 
+        # Determine the Rust toolchain
         toolchain =
           with fenix.packages.${system};
           combine [
-            minimal.rustc
-            minimal.cargo
-            complete.rust-analyzer
-            complete.rust-src
+            stable.rustc
+            stable.rust-src
+            stable.cargo
             complete.rustfmt
-            complete.clippy
+            stable.clippy
+            stable.rust-analyzer
+            stable.llvm-tools-preview
           ];
 
+        # Override the toolchain in crane
         craneLib = crane.overrideToolchain toolchain;
       in
       {
         devShells.default = craneLib.devShell {
           packages = with pkgs; [
             toolchain
-            rustfmt
-            clippy
-            qemu-user
+            cargo-llvm-cov
+            llvmPackages_19.libllvm
+            grcov
+            cargo-nextest
           ];
 
           env = {

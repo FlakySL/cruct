@@ -1,43 +1,25 @@
 use cruct_shared::FileFormat;
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::quote;
-use syn::Ident;
+use syn::{Ident, LitStr};
 
 use crate::generate::generate_field_initialization;
 use crate::parse::{FieldParams, MacroParams, StructField};
 
+/// Generates an implementation block for a given struct to handle configuration
+/// loading.
+///
+/// # Arguments
+/// * `struct_name`: The name of the struct for which the implementation block
+///   is being created.
+/// * `params`: Macro parameters containing configuration information.
+/// * `fields`: A list of fields in the struct, along with their metadata.
 pub fn generate_impl_block(
     struct_name: &Ident,
     params: &MacroParams,
     fields: &[StructField],
 ) -> TokenStream {
-    let path = &params.path;
-    let format_match = match &params.format {
-        Some(file_format) => {
-            let variant = match file_format {
-                FileFormat::Json => quote! { cruct_shared::FileFormat::Json },
-                FileFormat::Toml => quote! { cruct_shared::FileFormat::Toml },
-                FileFormat::Yml => quote! { cruct_shared::FileFormat::Yml },
-            };
-
-            quote! { #variant }
-        },
-        None => quote! { /* auto-detect via extension */
-            {
-                use cruct_shared::{get_parser_by_extension, ParserError};
-                let ext = std::path::Path::new(#path)
-                    .extension()
-                    .and_then(|s| s.to_str())
-                    .map(|s| s.to_lowercase());
-                let parser = get_parser_by_extension(ext.as_deref().unwrap_or_default())
-                    .ok_or_else(|| ParserError::InvalidFileFormat(
-                        ext.unwrap_or_else(|| "unknown".into())
-                    ))?;
-
-                parser.format()
-            }
-        },
-    };
+    let loader_name = Ident::new(&format!("{}Loader", struct_name), struct_name.span());
 
     let field_inits = fields
         .iter()
@@ -53,34 +35,77 @@ pub fn generate_impl_block(
                 .unwrap_or(&field.name);
 
             let default_params = FieldParams::default();
-            let params_ref: &FieldParams = field
+            let params_ref = field
                 .params
                 .as_ref()
                 .unwrap_or(&default_params);
-
             generate_field_initialization(params_ref, field_ident, config_key, &field.ty)
         });
 
+    let config_adds = params
+        .configs
+        .iter()
+        .map(|cfg| {
+            let path_lit = LitStr::new(&cfg.path, Span::call_site());
+            let format_ts = match &cfg.format {
+                #[cfg(feature = "json")]
+                Some(FileFormat::Json) => quote! { Some(cruct_shared::FileFormat::Json) },
+
+                #[cfg(feature = "toml")]
+                Some(FileFormat::Toml) => quote! { Some(cruct_shared::FileFormat::Toml) },
+
+                #[cfg(feature = "yaml")]
+                Some(FileFormat::Yml) => quote! { Some(cruct_shared::FileFormat::Yml) },
+
+                None => quote! { None },
+            };
+            quote! {
+                self.builder = self.builder.add_source(
+                    cruct_shared::ConfigFileSource::new(#path_lit, #format_ts)
+                );
+            }
+        });
+
     quote! {
+        pub struct #loader_name {
+            builder: cruct_shared::ConfigBuilder,
+        }
+
         impl #struct_name {
-            pub fn load() -> Result<Self, cruct_shared::ParserError> {
-                use cruct_shared::{FileFormat, ParserError, get_parser_by_extension};
+            pub fn loader() -> #loader_name {
+                #loader_name {
+                    builder: cruct_shared::ConfigBuilder::new()
+                }
+            }
+        }
 
-                let format: FileFormat = #format_match;
-                let parser = get_parser_by_extension(&format.to_string())
-                    .ok_or_else(|| ParserError::InvalidFileFormat(format.to_string()))?;
-                let config = parser.load(#path)?;
-
-                Self::load_from(&config)
+        impl #loader_name {
+            pub fn with_cli(mut self, priority: u8) -> Self {
+                self.builder = self.builder.add_source(cruct_shared::CliSource::new(priority));
+                self
             }
 
-            pub fn load_from(config: &cruct_shared::ConfigValue) -> Result<Self, cruct_shared::ParserError> {
+            pub fn with_config(mut self) -> Self {
+                #(#config_adds)*
+                self
+            }
+
+            pub fn load(self) -> Result<#struct_name, cruct_shared::ParserError> {
+                let cfg_val = self.builder.load()?;
+                #struct_name::load_from(&cfg_val)
+            }
+        }
+
+        impl #struct_name {
+            pub fn load_from(
+                config: &cruct_shared::ConfigValue
+            ) -> Result<Self, cruct_shared::ParserError> {
                 use cruct_shared::{ConfigValue, ParserError};
 
                 let ConfigValue::Section(section) = config else {
                     return Err(ParserError::TypeMismatch {
                         field: "root".into(),
-                        expected: "section".into()
+                        expected: "section".into(),
                     });
                 };
 
