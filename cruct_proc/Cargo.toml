@@ -2,7 +2,7 @@
 name = "cruct_proc"
 description = "Procedural macro for Cruct, enabling compile-time configuration file parsing and validation"
 repository = "https://github.com/FlakySL/cruct"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2024"
 authors = ["Esteve Autet <esteve@memw.es>", "Chiko <chiko@envs.net>"]
 readme = "../README.md"
@@ -18,7 +18,7 @@ json = ["cruct_shared/json"]
 proc-macro = true
 
 [dependencies]
-cruct_shared = { version = "=1.0.0", path = "../cruct_shared" }
+cruct_shared = { version = "=1.0.1", path = "../cruct_shared" }
 proc-macro2 = "1.0.94"
 quote = "1.0.40"
 syn = { version = "2.0.100", features = ["full"] }

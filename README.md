@@ -14,7 +14,15 @@
 
 A procedural macro for loading configuration files into Rust structs with compile‑time validation and type safety.
 
-## Features
+## Table of Contents 📖
+- [Features](#features)
+- [Installation](#installation)
+- [Basic Usage](#basic-usage)
+- [Use‑Case: Environment‑Variable Override](#usecase-environmentvariable-override)
+- [Advanced](#advanced)
+- [License](#license)
+
+## Features 👀
 
 - **Multi‑format support**: TOML, YAML, JSON (via Cargo feature flags)
 - **Merge & override**: CLI args, environment variables, config files, defaults

@@ -2,7 +2,7 @@
 name = "cruct_shared"
 description = "Shared library for Cruct, providing parsers and error handling"
 repository = "https://github.com/FlakySL/cruct"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2024"
 authors = ["Esteve Autet <esteve@memw.es>", "Chiko <chiko@envs.net>"]
 readme = "../README.md"
