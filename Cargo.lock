@@ -85,7 +85,7 @@ dependencies = [
 
 [[package]]
 name = "cruct_proc"
-version = "1.0.1"
+version = "1.0.0"
 dependencies = [
  "cruct_shared",
  "proc-macro2",
