@@ -96,7 +96,7 @@ dependencies = [
 
 [[package]]
 name = "cruct_shared"
-version = "1.0.1"
+version = "1.0.0"
 dependencies = [
  "jzon",
  "tempfile",
