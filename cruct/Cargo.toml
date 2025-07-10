@@ -5,7 +5,7 @@ repository = "https://github.com/FlakySL/cruct"
 version = "1.0.0"
 edition = "2024"
 authors = ["Esteve Autet <esteve@memw.es>", "Chiko <chiko@envs.net>"]
-keywords = ["cruct", "configuration", "json", "toml", "yaml", "parsers"]
+keywords = ["configuration", "json", "toml", "yaml", "parsers"]
 readme = "../README.md"
 license = "GPL-3.0"
 
