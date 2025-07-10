@@ -1,7 +1,13 @@
 [package]
 name = "cruct"
-version = "0.1.0"
+description = "A procedural macro for loading configuration files into Rust structs with compile‑time validation and type safety."
+repository = "https://github.com/FlakySL/cruct"
+version = "1.0.0"
 edition = "2024"
+authors = ["Esteve Autet <esteve@memw.es>", "Chiko <chiko@envs.net>"]
+keywords = ["cruct", "configuration", "json", "toml", "yaml", "parsers"]
+readme = "../README.md"
+license = "GPL-3.0"
 
 [features]
 default = ["toml", "yaml", "json"]

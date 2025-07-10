@@ -75,7 +75,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "cruct"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "assay",
  "cruct_proc",
@@ -85,7 +85,7 @@ dependencies = [
 
 [[package]]
 name = "cruct_proc"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "cruct_shared",
  "proc-macro2",
@@ -96,7 +96,7 @@ dependencies = [
 
 [[package]]
 name = "cruct_shared"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "jzon",
  "tempfile",

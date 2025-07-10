@@ -1,11 +1,11 @@
 ![cruct-readme](./.github/cruct_banner.png)
 
-[![Crates.io](https://badges.ws/crates/v/cruct)](https://crates.io/crates/cruct)  
-[![Docs.rs](https://badges.ws/crates/docs/cruct)](https://docs.rs/cruct)  
-[![License](https://badges.ws/crates/l/cruct)](https://docs.rs/cruct)  
-[![Downloads](https://badges.ws/crates/dt/cruct)](https://crates.io/crates/cruct)  
-[![Codecov](https://img.shields.io/codecov/c/github/FlakySL/cruct)](https://app.codecov.io/gh/FlakySL/cruct)  
-![tests](https://github.com/FlakySL/cruct/actions/workflows/overall-coverage.yml/badge.svg)  
+[![Crates.io](https://badges.ws/crates/v/cruct)](https://crates.io/crates/cruct)
+[![Docs.rs](https://badges.ws/crates/docs/cruct)](https://docs.rs/cruct)
+[![License](https://badges.ws/crates/l/cruct)](https://docs.rs/cruct)
+[![Downloads](https://badges.ws/crates/dt/cruct)](https://crates.io/crates/cruct)
+[![Codecov](https://img.shields.io/codecov/c/github/FlakySL/cruct)](https://app.codecov.io/gh/FlakySL/cruct)
+![tests](https://github.com/FlakySL/cruct/actions/workflows/overall-coverage.yml/badge.svg)
 [![Discord](https://badges.ws/discord/online/1344769456731197450)](https://discord.gg/AJWFyps23a)
 
 ---
@@ -27,14 +27,14 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-cruct = "0.1.0"
+cruct = "1.0.0"
 ````
 
 Enable only the formats you need:
 
 ```toml
 [dependencies.cruct]
-version = "0.1.0"
+version = "1.0.0"
 default-features = false
 features = ["toml", "json"]  # only TOML and JSON support
 ```
