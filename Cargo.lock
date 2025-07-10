@@ -85,7 +85,7 @@ dependencies = [
 
 [[package]]
 name = "cruct_proc"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "cruct_shared",
  "proc-macro2",
@@ -96,7 +96,7 @@ dependencies = [
 
 [[package]]
 name = "cruct_shared"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "jzon",
  "tempfile",

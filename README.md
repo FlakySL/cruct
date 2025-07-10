@@ -15,12 +15,12 @@
 A procedural macro for loading configuration files into Rust structs with compile‑time validation and type safety.
 
 ## Table of Contents 📖
-- [Features](#features)
-- [Installation](#installation)
-- [Basic Usage](#basic-usage)
-- [Use‑Case: Environment‑Variable Override](#usecase-environmentvariable-override)
-- [Advanced](#advanced)
-- [License](#license)
+- [Features](#features-)
+- [Installation](#installation-)
+- [Basic Usage](#basic-usage-)
+- [Use‑Case: Environment‑Variable Override](#usecase-environmentvariable-override-)
+- [Advanced](#advanced-)
+- [License](#license-)
 
 ## Features 👀
 
@@ -29,7 +29,7 @@ A procedural macro for loading configuration files into Rust structs with compil
 - **Compile‑time safety**: Missing or mismatched fields become compile or runtime errors
 - **Nested structures**: Automatically derive for nested custom types
 
-## Installation
+## Installation 📦
 
 Add to your `Cargo.toml`:
 
@@ -47,7 +47,7 @@ default-features = false
 features = ["toml", "json"]  # only TOML and JSON support
 ```
 
-## Basic Usage
+## Basic Usage 🔍
 
 Annotate your config‐struct with `#[cruct]`, pointing at one or more sources:
 
@@ -70,7 +70,7 @@ fn main() -> Result<(), cruct_shared::ParserError> {
 }
 ```
 
-## Use‑Case: Environment‑Variable Override
+## Use‑Case: Environment‑Variable Override 💡
 
 Often you want a default in your file, but allow ops to override via env vars. For example, given `tests/fixtures/test_config.toml`:
 
@@ -106,7 +106,7 @@ fn main() {
 
 This pattern is drawn directly from our end‑to‑end tests.
 
-## Advanced
+## Advanced 🥷
 
 * **Multiple files & priority**: Chain `load_config` calls with explicit `priority`
 * **Case‑insensitive keys**: Use `#[field(name = "HTTP_PORT", insensitive = true)]`
@@ -114,7 +114,7 @@ This pattern is drawn directly from our end‑to‑end tests.
 
 See the full [API docs](https://docs.rs/cruct) for details on all options.
 
-## License
+## License 📜
 
 This repository is dual licensed, TLDR. If your repository is open source, the library
 is free of use, otherwise contact [licensing@flaky.es](mailto:licensing@flaky.es) for a custom license for your

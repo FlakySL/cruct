@@ -16,8 +16,8 @@ yaml = ["cruct_proc/yaml", "cruct_shared/yaml"]
 json = ["cruct_proc/json", "cruct_shared/json"]
 
 [dependencies]
-cruct_proc = { version = "=1.0.0", path = "../cruct_proc" }
-cruct_shared = { version = "=1.0.0", path = "../cruct_shared" }
+cruct_proc = { version = "=1.0.1", path = "../cruct_proc" }
+cruct_shared = { version = "=1.0.1", path = "../cruct_shared" }
 
 [dev-dependencies]
 assay = "0.1.1"
