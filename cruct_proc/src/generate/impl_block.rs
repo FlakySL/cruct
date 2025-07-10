@@ -6,6 +6,14 @@ use syn::{Ident, LitStr};
 use crate::generate::generate_field_initialization;
 use crate::parse::{FieldParams, MacroParams, StructField};
 
+/// Generates an implementation block for a given struct to handle configuration
+/// loading.
+///
+/// # Arguments
+/// * `struct_name`: The name of the struct for which the implementation block
+///   is being created.
+/// * `params`: Macro parameters containing configuration information.
+/// * `fields`: A list of fields in the struct, along with their metadata.
 pub fn generate_impl_block(
     struct_name: &Ident,
     params: &MacroParams,
@@ -48,6 +56,7 @@ pub fn generate_impl_block(
 
                 #[cfg(feature = "yaml")]
                 Some(FileFormat::Yml) => quote! { Some(cruct_shared::FileFormat::Yml) },
+
                 None => quote! { None },
             };
             quote! {

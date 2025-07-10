@@ -4,6 +4,21 @@ use syn::{Ident, Type};
 
 use crate::parse::FieldParams;
 
+/// Generates code to initialize a field based on configuration sources.
+///
+/// This function constructs a token stream that initializes a field by checking
+/// values from multiple prioritized configuration sources: command line
+/// arguments, environment variables, and configuration files. If a value is not
+/// found in any of these sources, it either uses a default value (if provided)
+/// or throws an error for missing configuration.
+///
+/// * `field`: Metadata about the field being initialized, including its
+///   override options, default value, and case sensitivity.
+/// * `field_ident`: The identifier for the field in the generated code.
+/// * `config_key`: The key used to look up the field's value in the
+///   configuration sources.
+/// * `field_type`: The expected type of the field, which is used for parsing
+///   the configuration value.
 pub fn generate_field_initialization(
     field: &FieldParams,
     field_ident: &Ident,

@@ -22,43 +22,41 @@ mod yaml;
 mod tests;
 
 #[cfg(feature = "json")]
-use json::JsonParser;
+pub use json::JsonParser;
 #[cfg(feature = "toml")]
-use toml::TomlParser;
+pub use toml::TomlParser;
 #[cfg(feature = "yaml")]
-use yaml::YmlParser;
+pub use yaml::YmlParser;
 
-/// Enum representing possible errors during parsing.
-/// Utilizes the `thiserror` crate for error handling.
+/// Represents various errors that can occur during the parsing process.
+/// Leverages the `thiserror` crate for structured and user-friendly error
+/// handling.
 #[derive(Debug, ThisError)]
 pub enum ParserError {
-    /// Error indicating that the provided file format is not supported by the
-    /// parser. This error is returned when an attempt is made to parse a
-    /// file with an unsupported extension.
+    /// Indicates that the provided file format is unsupported.
+    /// Occurs when trying to parse a file with an invalid or unrecognized
+    /// extension.
     #[error("'{0}' is not a valid file format")]
     InvalidFileFormat(String),
 
-    /// Error indicating that a required field is missing in the configuration
-    /// file. This error is returned when a field that is expected to be
-    /// present is not found.
+    /// Triggered when a required field is missing in the configuration file.
+    /// This happens when an expected field is absent.
     #[error("Missing required field: {0}")]
     MissingField(String),
 
-    /// Error indicating a type mismatch in a field within the configuration
-    /// file. This error is returned when the type of a field's value does
-    /// not match the expected type.
+    /// Occurs when there is a type mismatch in a field within the configuration
+    /// file. This happens when a field's value type does not match the
+    /// expected type.
     #[error("Type mismatch in field '{field}', expected {expected}")]
     TypeMismatch { field: String, expected: String },
 
-    /// Error indicating that the file does not have an extension.
-    /// This error is returned when a file path is provided without an
-    /// extension, making it impossible to determine the file format.
+    /// Raised when a file path lacks an extension.
+    /// Without an extension, determining the file format becomes impossible.
     #[error("This file has no file extension")]
     MissingFileExtension,
 
-    /// Error indicating a nested configuration error within a specific section.
-    /// This error provides details about the section where the error occurred
-    /// and the source of the error.
+    /// Indicates a nested configuration error in a specific section.
+    /// Provides details about the section and the root cause of the error.
     #[error("Nested configuration error in {section}: {source}")]
     NestedError {
         section: String,
@@ -66,33 +64,28 @@ pub enum ParserError {
         source: Box<ParserError>,
     },
 
-    /// Standard IO error that occurs during file operations.
-    /// This error is returned when there is an issue with reading or writing
-    /// files.
+    /// Reflects standard IO errors encountered during file operations.
+    /// Arises when issues occur while reading or writing files.
     #[error("{0:#}")]
     Io(#[from] StdError),
 
-    /// Error indicating a failure in parsing a TOML file.
-    /// This error is returned when the TOML parser encounters invalid syntax or
-    /// structure.
+    /// Represents a failure in parsing a TOML file.
+    /// Occurs when the parser encounters invalid TOML syntax or structure.
     #[error("TOML parsing error: {0}")]
     TomlError(#[from] TomlError),
 
-    /// Error indicating a failure in parsing a JSON file.
-    /// This error is returned when the JSON parser encounters invalid syntax or
-    /// structure.
+    /// Represents a failure in parsing a JSON file.
+    /// Triggered by invalid JSON syntax or structure during parsing.
     #[error("JSON parsing error: {0}")]
     JsonError(#[from] JsonError),
 
-    /// Error indicating a failure in parsing a YAML file.
-    /// This error is returned when the YAML parser encounters invalid syntax or
-    /// structure.
+    /// Represents a failure in parsing a YAML file.
+    /// Triggered by invalid YAML syntax or structure during parsing.
     #[error("YAML parsing error: {0}")]
     YmlError(#[from] YmlError),
 }
 
-/// This enum represents the available
-/// file formats for configuration parsing.
+/// Represents the supported file formats for configuration parsing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FileFormat {
     /// YML/YAML file format identifier.
@@ -124,6 +117,7 @@ impl FromStr for FileFormat {
 
             #[cfg(feature = "toml")]
             "toml" => Ok(FileFormat::Toml),
+
             _ => Err(ParserError::InvalidFileFormat(s.into())),
         }
     }
@@ -173,6 +167,7 @@ pub trait Parser: Send + Sync {
 
             #[cfg(feature = "toml")]
             "toml" => FileFormat::Toml,
+
             _ => panic!("Unsupported file format"),
         }
     }
@@ -195,6 +190,7 @@ pub fn get_parser(ext: &str) -> Result<Arc<dyn Parser>, ParserError> {
 
         #[cfg(feature = "toml")]
         "toml" => Ok(Arc::new(TomlParser)),
+
         _ => Err(ParserError::InvalidFileFormat(ext.into())),
     }
 }

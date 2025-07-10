@@ -10,10 +10,19 @@ pub struct ConfigFileSource {
 }
 
 impl ConfigFileSource {
+    /// Creates a new `ConfigFileSource`.
+    ///
+    /// * `path`: The path to the configuration file.
+    /// * `format`: Optional file format. If not provided, the format will be
+    ///   inferred from the file extension.
     pub fn new(path: impl Into<String>, format: Option<FileFormat>) -> Self {
         ConfigFileSource { path: path.into(), format }
     }
 
+    /// Retrieves the parser based on the file format or extension.
+    ///
+    /// If a format is provided, it uses that; otherwise, it infers the
+    /// format from the file
     fn get_parser(&self) -> Result<Arc<dyn Parser>, ParserError> {
         let ext = if let Some(fmt) = &self.format {
             fmt.to_string()
@@ -31,6 +40,7 @@ impl ConfigSource for ConfigFileSource {
         parser.load(&self.path)
     }
 }
+
 #[cfg(test)]
 mod test {
     use crate::{ConfigFileSource, FileFormat};

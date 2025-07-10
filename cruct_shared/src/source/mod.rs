@@ -5,14 +5,12 @@ use crate::{ConfigValue, ParserError};
 
 mod cli;
 mod config;
-mod file;
 
 #[cfg(test)]
 mod tests;
 
 pub use cli::CliSource;
 pub use config::ConfigFileSource;
-pub use file::FileSource;
 
 /// Trait defining a configuration source.
 ///

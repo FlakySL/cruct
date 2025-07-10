@@ -28,6 +28,21 @@ impl Parser for YmlParser {
     }
 }
 
+/// Parses a YAML value into a corresponding `ConfigValue` type.
+///
+/// This function recursively converts YAML structures (e.g., hashes, arrays,
+/// strings, etc.) into the application's internal configuration representation
+/// (`ConfigValue`). Unsupported YAML types will result in a `ParserError`.
+///
+/// # Arguments
+///
+/// * `value` - A `Yaml` value representing the YAML element to parse.
+///
+/// # Returns
+///
+/// * `Result<ConfigValue, ParserError>` - On success, returns the parsed
+///   `ConfigValue`. On failure, returns a `ParserError` indicating the type
+///   mismatch.
 fn parse_yaml_value(value: Yaml) -> Result<ConfigValue, ParserError> {
     match value {
         Yaml::Hash(hash) => {

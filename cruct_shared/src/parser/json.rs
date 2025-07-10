@@ -16,10 +16,14 @@ impl Parser for JsonParser {
     fn load(&self, path: &str) -> Result<ConfigValue, ParserError> {
         let content = read_to_string(path)?;
         let json = parse(&content)?;
+
         parse_json_value(json)
     }
 }
 
+/// Parses a JSON value into a configuration value.
+///
+/// * `value`: The `JsonValue` to be parsed.
 fn parse_json_value(value: JsonValue) -> Result<ConfigValue, ParserError> {
     match value {
         JsonValue::Object(obj) => {
@@ -39,6 +43,7 @@ fn parse_json_value(value: JsonValue) -> Result<ConfigValue, ParserError> {
         _ => Ok(ConfigValue::Value(value.to_string())),
     }
 }
+
 #[cfg(test)]
 mod test {
     use std::collections::HashMap;

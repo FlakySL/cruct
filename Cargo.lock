@@ -80,6 +80,7 @@ dependencies = [
  "assay",
  "cruct_proc",
  "cruct_shared",
+ "tempfile",
 ]
 
 [[package]]

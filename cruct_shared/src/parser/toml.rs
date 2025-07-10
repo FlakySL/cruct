@@ -16,10 +16,24 @@ impl Parser for TomlParser {
     fn load(&self, path: &str) -> Result<ConfigValue, ParserError> {
         let content = fs::read_to_string(path)?;
         let value = content.parse::<DocumentMut>()?;
+
         parse_toml(value.as_item())
     }
 }
 
+/// Parses a TOML item into a `ConfigValue`, which is an intermediary
+/// representation for configuration data.
+///
+/// # Parameters:
+/// * `item`: The TOML item to parse, which could be a value, table, or array of
+///   tables.
+///
+/// # Returns:
+/// A `ConfigValue` representing the parsed TOML data.
+///
+/// # Errors:
+/// Returns a `ParserError` if the TOML item cannot be parsed due to invalid
+/// syntax or unsupported structures.
 fn parse_toml(item: &Item) -> Result<ConfigValue, ParserError> {
     Ok(match item {
         Item::None => ConfigValue::Array(Vec::new()),
@@ -35,6 +49,9 @@ fn parse_toml(item: &Item) -> Result<ConfigValue, ParserError> {
     })
 }
 
+/// Parses a TOML table into a `ConfigValue`.
+///
+/// * `table`: A reference to the TOML table to be parsed.
 fn parse_table(table: &Table) -> Result<ConfigValue, ParserError> {
     let mut map = HashMap::new();
     for (k, v) in table {
@@ -43,6 +60,9 @@ fn parse_table(table: &Table) -> Result<ConfigValue, ParserError> {
     Ok(ConfigValue::Section(map))
 }
 
+/// Parses a TOML value into a `ConfigValue`.
+///
+/// * `value`: A reference to the TOML value that needs to be parsed.
 fn parse_toml_value(value: &Value) -> Result<ConfigValue, ParserError> {
     Ok(match value {
         Value::InlineTable(table) => {
