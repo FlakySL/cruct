@@ -44,7 +44,6 @@
             llvmPackages_19.libllvm
             grcov
             cargo-nextest
-            gnumake
           ];
 
           env = {
