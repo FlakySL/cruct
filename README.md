@@ -1,4 +1,4 @@
-![cruct-readme](./.github/cruct_banner.png)
+![cruct-readme](https://raw.githubusercontent.com/FlakySL/cruct/refs/heads/main/.github/cruct_banner.png)
 
 [![Crates.io](https://badges.ws/crates/v/cruct)](https://crates.io/crates/cruct)
 [![Docs.rs](https://badges.ws/crates/docs/cruct)](https://docs.rs/cruct)
@@ -7,10 +7,6 @@
 [![Codecov](https://img.shields.io/codecov/c/github/FlakySL/cruct)](https://app.codecov.io/gh/FlakySL/cruct)
 ![tests](https://github.com/FlakySL/cruct/actions/workflows/overall-coverage.yml/badge.svg)
 [![Discord](https://badges.ws/discord/online/1344769456731197450)](https://discord.gg/AJWFyps23a)
-
----
-
-# Cruct
 
 A procedural macro for loading configuration files into Rust structs with compile‑time validation and type safety.
 
