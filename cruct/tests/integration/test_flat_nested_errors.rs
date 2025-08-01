@@ -7,6 +7,7 @@ use cruct::cruct;
 fn missing_flat_nested_field() {
     #[cruct(load_config(path = "tests/fixtures/integration/missing_flat_nested.toml"))]
     #[derive(Debug)]
+    #[allow(dead_code)]
     struct Config {
         exists: String,
         nested: Nested,
@@ -14,6 +15,7 @@ fn missing_flat_nested_field() {
 
     #[cruct]
     #[derive(Debug)]
+    #[allow(dead_code)]
     struct Nested {
         missing: u32,
     }
@@ -37,12 +39,14 @@ fn missing_flat_nested_field() {
 fn flat_nested_type_mismatch() {
     #[cruct(load_config(path = "tests/fixtures/integration/type_mismatch_flat.toml"))]
     #[derive(Debug)]
+    #[allow(dead_code)]
     struct Config {
         nested: Nested,
     }
 
     #[cruct]
     #[derive(Debug)]
+    #[allow(dead_code)]
     struct Nested {
         value: u32,
     }
