@@ -21,4 +21,4 @@
 //! ```
 
 pub use cruct_proc::cruct;
-pub use cruct_shared::*;
+pub use cruct_shared::{ParserError as Error, *};

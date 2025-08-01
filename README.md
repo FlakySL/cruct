@@ -31,8 +31,8 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-cruct = "1.0.0"
-````
+cruct = "1.0.0" # includes TOML, YAML, JSON support by default
+```
 
 Enable only the formats you need:
 
@@ -77,7 +77,7 @@ http_port = 8080
 You can override `http_port` at runtime:
 
 ```rust
-use cruct::cruct;
+use cruct::{cruct, Error};
 
 #[cruct(load_config(path = "tests/fixtures/test_config.toml"))]
 #[derive(Debug, PartialEq)]
@@ -86,17 +86,18 @@ struct TestEnv {
     http_port: u16,
 }
 
-fn main() {
+fn main() -> Result<(), Error> {
     // Simulate setting the env var:
     unsafe { std::env::set_var("TEST_HTTP_PORT", "9999"); }
 
     let config = TestEnv::loader()
         .with_config()
-        .load()
-        .unwrap();
+        .load()?;
 
     assert_eq!(config.http_port, 9999);
     println!("Overridden port: {}", config.http_port);
+
+    Ok(())
 }
 ```
 

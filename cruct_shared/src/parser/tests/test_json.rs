@@ -7,7 +7,8 @@ use crate::{ConfigFileSource, ConfigSource, ConfigValue, FileFormat};
 #[test]
 fn parses_simple_json_map() {
     let mut file = NamedTempFile::new().unwrap();
-    writeln!(file, "{{\"foo\": \"bar\",\"baz\": 42}}").unwrap();
+    writeln!(file, r#"{{"foo": "bar", "baz": 42}}"#).unwrap();
+
     let path = file
         .path()
         .to_str()
