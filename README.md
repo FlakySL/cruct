@@ -57,7 +57,7 @@ struct AppConfig {
     database_url: String,
 }
 
-fn main() -> Result<(), cruct_shared::ParserError> {
+fn main() -> Result<(), cruct::ParserError> {
     let cfg = AppConfig::loader()
         .with_config()
         .load()?;

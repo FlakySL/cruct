@@ -76,7 +76,7 @@ fn build_override_chain(field: &FieldParams) -> TokenStream {
                 .find_map(|arg| {
                     let prefix = concat!("--", #flag, "=");
                     arg.strip_prefix(prefix)
-                        .map(|v| cruct_shared::parser::ConfigValue::Value(v.to_string()))
+                        .map(|v| ::cruct::parser::ConfigValue::Value(v.to_string()))
                 })
         }
     } else {
@@ -87,7 +87,7 @@ fn build_override_chain(field: &FieldParams) -> TokenStream {
         quote! {
             std::env::var(#var)
                 .ok()
-                .map(|s| cruct_shared::parser::ConfigValue::Value(s))
+                .map(|s| ::cruct::parser::ConfigValue::Value(s))
         }
     } else {
         quote! { None }
@@ -123,13 +123,13 @@ fn parse_with_default(
         {
             let maybe = #override_chain.or_else(|| #config_lookup);
             if let Some(val) = maybe {
-                <#ty as cruct_shared::FromConfigValue>::from_config_value(&val)
-                    .map_err(|e| cruct_shared::parser::ParserError::NestedError {
+                <#ty as ::cruct::FromConfigValue>::from_config_value(&val)
+                    .map_err(|e| ::cruct::parser::ParserError::NestedError {
                         section: #key.to_string(), source: Box::new(e)
                     })?
             } else {
-                let sec = cruct_shared::ConfigValue::Section(map.clone());
-                <#ty as cruct_shared::FromConfigValue>::from_config_value(&sec)
+                let sec = ::cruct::ConfigValue::Section(map.clone());
+                <#ty as ::cruct::FromConfigValue>::from_config_value(&sec)
                     .unwrap_or(#default_val)
             }
         }
@@ -148,12 +148,12 @@ fn parse_scalar(
         {
             let maybe = #override_chain.or_else(|| #config_lookup);
             if let Some(val) = maybe {
-                <#ty as cruct_shared::FromConfigValue>::from_config_value(&val)
-                    .map_err(|_| cruct_shared::parser::ParserError::TypeMismatch {
+                <#ty as ::cruct::FromConfigValue>::from_config_value(&val)
+                    .map_err(|_| ::cruct::parser::ParserError::TypeMismatch {
                         field: #key.to_string(), expected: stringify!(#ty).into()
                     })?
             } else {
-                return Err(cruct_shared::parser::ParserError::MissingField(
+                return Err(::cruct::parser::ParserError::MissingField(
                     #key.to_string(),
                 ));
             }
@@ -173,14 +173,14 @@ fn parse_nested(
         {
             let maybe = #override_chain.or_else(|| #config_lookup);
             if let Some(val) = maybe {
-                <#ty as cruct_shared::FromConfigValue>::from_config_value(&val)
-                    .map_err(|e| cruct_shared::parser::ParserError::NestedError {
+                <#ty as ::cruct::FromConfigValue>::from_config_value(&val)
+                    .map_err(|e| ::cruct::parser::ParserError::NestedError {
                         section: #key.to_string(), source: Box::new(e)
                     })?
             } else {
-                let sec = cruct_shared::ConfigValue::Section(map.clone());
-                <#ty as cruct_shared::FromConfigValue>::from_config_value(&sec)
-                    .map_err(|e| cruct_shared::parser::ParserError::NestedError {
+                let sec = ::cruct::ConfigValue::Section(map.clone());
+                <#ty as ::cruct::FromConfigValue>::from_config_value(&sec)
+                    .map_err(|e| ::cruct::parser::ParserError::NestedError {
                         section: #key.to_string(), source: Box::new(e)
                     })?
             }

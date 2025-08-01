@@ -3,8 +3,8 @@ use std::sync::Arc;
 use std::thread::spawn;
 
 use assay::assay;
+use cruct::parser::TomlParser;
 use cruct::{Parser, cruct};
-use cruct_shared::parser::TomlParser;
 use tempfile::NamedTempFile;
 
 #[assay(

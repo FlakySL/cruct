@@ -49,19 +49,19 @@ pub fn generate_impl_block(
             let path_lit = LitStr::new(&cfg.path, Span::call_site());
             let format_ts = match &cfg.format {
                 #[cfg(feature = "json")]
-                Some(FileFormat::Json) => quote! { Some(cruct_shared::FileFormat::Json) },
+                Some(FileFormat::Json) => quote! { Some(::cruct::FileFormat::Json) },
 
                 #[cfg(feature = "toml")]
-                Some(FileFormat::Toml) => quote! { Some(cruct_shared::FileFormat::Toml) },
+                Some(FileFormat::Toml) => quote! { Some(::cruct::FileFormat::Toml) },
 
                 #[cfg(feature = "yaml")]
-                Some(FileFormat::Yml) => quote! { Some(cruct_shared::FileFormat::Yml) },
+                Some(FileFormat::Yml) => quote! { Some(::cruct::FileFormat::Yml) },
 
                 None => quote! { None },
             };
             quote! {
                 self.builder = self.builder.add_source(
-                    cruct_shared::ConfigFileSource::new(#path_lit, #format_ts)
+                    ::cruct::ConfigFileSource::new(#path_lit, #format_ts)
                 );
             }
         });
@@ -69,14 +69,14 @@ pub fn generate_impl_block(
     quote! {
         /// Builder type for loading a `<#struct_name>` from CLI, ENV, and config files.
         pub struct #loader_name {
-            builder: cruct_shared::ConfigBuilder,
+            builder: ::cruct::ConfigBuilder,
         }
 
         impl #struct_name {
             /// Create a new loader for this struct.
             pub fn loader() -> #loader_name {
                 #loader_name {
-                    builder: cruct_shared::ConfigBuilder::new()
+                    builder: ::cruct::ConfigBuilder::new()
                 }
             }
         }
@@ -85,7 +85,7 @@ pub fn generate_impl_block(
             /// Add a CLI source with the given priority.
             pub fn with_cli(mut self, priority: u8) -> Self {
                 self.builder = self.builder.add_source(
-                    cruct_shared::CliSource::new(priority)
+                    ::cruct::CliSource::new(priority)
                 );
                 self
             }
@@ -101,7 +101,7 @@ pub fn generate_impl_block(
             /// # Errors
             /// Returns a `ParserError` if any required field is missing, or
             /// if any parsing or nested error occurs.
-            pub fn load(self) -> Result<#struct_name, cruct_shared::ParserError> {
+            pub fn load(self) -> Result<#struct_name, ::cruct::ParserError> {
                 let cfg_val = self.builder.load()?;
                 #struct_name::load_from(&cfg_val)
             }
@@ -116,9 +116,9 @@ pub fn generate_impl_block(
             /// - `TypeMismatch` if the top-level value is not a section.
             /// - Nested errors for each field via `NestedError`.
             pub fn load_from(
-                config: &cruct_shared::ConfigValue
-            ) -> Result<Self, cruct_shared::ParserError> {
-                use cruct_shared::{ConfigValue, ParserError};
+                config: &::cruct::ConfigValue
+            ) -> Result<Self, ::cruct::ParserError> {
+                use ::cruct::{ConfigValue, ParserError};
 
                 // Ensure the provided `ConfigValue` is a section, cloning the map
                 let mut map = match config {
@@ -139,10 +139,10 @@ pub fn generate_impl_block(
 
         /// Allow this struct itself to be treated as a nested config value.
         /// This supports flat-nested loading when a struct appears inside another.
-        impl cruct_shared::FromConfigValue for #struct_name {
+        impl ::cruct::FromConfigValue for #struct_name {
             fn from_config_value(
-                value: &cruct_shared::ConfigValue
-            ) -> Result<Self, cruct_shared::ParserError> {
+                value: &::cruct::ConfigValue
+            ) -> Result<Self, ::cruct::ParserError> {
                 #struct_name::load_from(value)
             }
         }
