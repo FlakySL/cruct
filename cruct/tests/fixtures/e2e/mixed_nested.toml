@@ -1,0 +1,5 @@
+top_value = 100
+flat_value = true
+
+[nested_section]
+inner_value = "section_value"

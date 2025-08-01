@@ -236,8 +236,8 @@ macro_rules! impl_from_config_value {
 fn parse_value<T: FromStr>(s: &str) -> Result<T, ParserError> {
     s.parse::<T>()
         .map_err(|_| ParserError::TypeMismatch {
-            field: "Failed to parse value".into(),
-            expected: stringify!(T).into(),
+            field: s.to_string(),
+            expected: std::any::type_name::<T>().to_string(),
         })
 }
 

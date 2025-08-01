@@ -65,8 +65,17 @@ pub fn merge_sections(
 /// returning it directly.
 pub fn merge_configs(base: ConfigValue, high: ConfigValue) -> Result<ConfigValue, ParserError> {
     match (base, high) {
-        (ConfigValue::Section(base), ConfigValue::Section(high)) => {
-            Ok(ConfigValue::Section(merge_sections(base, high)))
+        (ConfigValue::Section(mut base_map), ConfigValue::Section(high_map)) => {
+            for (k, v_high) in high_map {
+                if let Some(base_val) = base_map.remove(&k) {
+                    let merged = merge_configs(base_val, v_high)?;
+                    base_map.insert(k, merged);
+                } else {
+                    base_map.insert(k, v_high);
+                }
+            }
+
+            Ok(ConfigValue::Section(base_map))
         },
         (_old, high_val) => Ok(high_val),
     }

@@ -1,0 +1,3 @@
+top_level = "root_value"
+value = 42
+flag = true

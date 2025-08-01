@@ -2,6 +2,7 @@ mod test_arrays;
 mod test_case_insensitive;
 mod test_concurrency;
 mod test_error_cases;
+mod test_flat_nested_errors;
 mod test_loader_flow;
 mod test_loading;
 mod test_macro_api;

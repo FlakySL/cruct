@@ -1,5 +1,5 @@
 use assay::assay;
-use cruct::{ConfigValue, FromConfigValue, ParserError, cruct};
+use cruct::cruct;
 
 #[assay(
     include = ["tests/fixtures/e2e/nested.toml"],
@@ -16,12 +16,6 @@ fn nested_structs_load_correctly() {
     struct Inner {
         #[field(default = 100)]
         value: u32,
-    }
-
-    impl FromConfigValue for Inner {
-        fn from_config_value(value: &ConfigValue) -> Result<Self, ParserError> {
-            Inner::load_from(value)
-        }
     }
 
     let o = Outer::loader()

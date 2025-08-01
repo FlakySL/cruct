@@ -1,5 +1,5 @@
 use assay::assay;
-use cruct::{ConfigValue, FromConfigValue, ParserError, cruct};
+use cruct::cruct;
 
 #[assay(
     include = ["tests/fixtures/test_config.toml"],
@@ -10,12 +10,6 @@ fn test_nested_struct_toml() {
     struct SomeStruct {
         items: Vec<String>,
         numbers: Vec<u16>,
-    }
-
-    impl FromConfigValue for SomeStruct {
-        fn from_config_value(value: &ConfigValue) -> Result<Self, ParserError> {
-            SomeStruct::load_from(value)
-        }
     }
 
     #[cruct(load_config(path = "tests/fixtures/test_config.toml"))]
