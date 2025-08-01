@@ -15,7 +15,7 @@ mod parse;
 ///
 /// # Usage
 /// ```
-/// use cruct_proc::cruct;
+/// use cruct::cruct;
 ///
 /// #[cruct(load_config(path = "config.toml", format = "Toml"))]
 /// struct Config {
