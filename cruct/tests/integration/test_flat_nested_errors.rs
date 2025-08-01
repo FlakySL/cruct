@@ -51,12 +51,6 @@ fn flat_nested_type_mismatch() {
         .with_config()
         .load();
 
-    // Diff < left / right > :
-    // <Nested configuration error in nested: Nested configuration error in value:
-    // Type mismatch in field 'Failed to parse value', expected T
-    // >Nested configuration error in nested: Type mismatch in field 'value',
-    // expected u32
-
     assert!(result.is_err());
     if let Err(e) = result {
         assert_eq!(
