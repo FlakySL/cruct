@@ -26,6 +26,7 @@ impl Parser for JsonParser {
 /// * `value`: The `JsonValue` to be parsed.
 fn parse_json_value(value: JsonValue) -> Result<ConfigValue, ParserError> {
     match value {
+        JsonValue::Null => Ok(ConfigValue::Null),
         JsonValue::Object(obj) => {
             let mut map = HashMap::new();
             for (k, v) in obj {
@@ -114,5 +115,13 @@ mod test {
                 ConfigValue::Value("item2".into())
             ])
         );
+    }
+
+    #[test]
+    fn test_parse_json_value_null() {
+        let value = JsonValue::Null;
+        let result = parse_json_value(value).unwrap();
+
+        assert_eq!(result, ConfigValue::Null);
     }
 }

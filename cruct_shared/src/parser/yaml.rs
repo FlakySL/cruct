@@ -65,9 +65,9 @@ fn parse_yaml_value(value: Yaml) -> Result<ConfigValue, ParserError> {
         Yaml::Integer(i) => Ok(ConfigValue::Value(i.to_string())),
         Yaml::Boolean(b) => Ok(ConfigValue::Value(b.to_string())),
         Yaml::Real(s) => Ok(ConfigValue::Value(s)),
-        Yaml::Null => Ok(ConfigValue::Value("null".to_string())),
+        Yaml::Null => Ok(ConfigValue::Null),
         _ => Err(ParserError::TypeMismatch {
-            field: "value".to_string(),
+            field: "YAML value".to_string(),
             expected: "supported YAML type".to_string(),
         }),
     }
@@ -159,7 +159,7 @@ mod test {
         let value = docs[0].clone();
 
         let result = parse_yaml_value(value).unwrap();
-        assert_eq!(result, ConfigValue::Value("null".to_string()));
+        assert_eq!(result, ConfigValue::Null);
     }
 
     #[test]

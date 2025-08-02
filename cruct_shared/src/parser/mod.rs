@@ -145,6 +145,7 @@ impl Display for FileFormat {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ConfigValue {
     Value(String),
+    Null,
     Section(HashMap<String, ConfigValue>),
     Array(Vec<ConfigValue>),
 }
@@ -267,6 +268,23 @@ where
                 field: "".into(),
                 expected: "array".into(),
             }),
+        }
+    }
+}
+
+/// Helper trait to convert a `ConfigValue` to an `Option<T>`.
+impl<T> FromConfigValue for Option<T>
+where
+    T: FromConfigValue,
+{
+    fn from_config_value(value: &ConfigValue) -> Result<Self, ParserError> {
+        match value {
+            ConfigValue::Null => Ok(None),
+            _ => match T::from_config_value(value) {
+                Ok(v) => Ok(Some(v)),
+                Err(ParserError::MissingField(_)) => Ok(None),
+                Err(e) => Err(e),
+            },
         }
     }
 }

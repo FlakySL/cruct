@@ -36,7 +36,7 @@ impl Parser for TomlParser {
 /// syntax or unsupported structures.
 fn parse_toml(item: &Item) -> Result<ConfigValue, ParserError> {
     Ok(match item {
-        Item::None => ConfigValue::Array(Vec::new()),
+        Item::None => ConfigValue::Null,
         Item::Value(value) => parse_toml_value(value)?,
         Item::Table(table) => parse_table(table)?,
         Item::ArrayOfTables(array_of_tables) => {
@@ -243,6 +243,6 @@ mod test {
         let item = Item::None;
         let result = parse_toml(&item).unwrap();
 
-        assert_eq!(result, ConfigValue::Array(Vec::new()));
+        assert_eq!(result, ConfigValue::Null);
     }
 }

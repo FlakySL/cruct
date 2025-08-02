@@ -48,7 +48,7 @@ features = ["toml", "json"]  # only TOML and JSON support
 Annotate your config‐struct with `#[cruct]`, pointing at one or more sources:
 
 ```rust
-use cruct::cruct;
+use cruct::{cruct, Error};
 
 #[cruct(load_config(path = "config/settings.toml"))]
 struct AppConfig {
@@ -57,10 +57,11 @@ struct AppConfig {
     database_url: String,
 }
 
-fn main() -> Result<(), cruct::ParserError> {
+fn main() -> Result<(), Error> {
     let cfg = AppConfig::loader()
         .with_config()
         .load()?;
+
     println!("Listening on port {}", cfg.http_port);
     Ok(())
 }
