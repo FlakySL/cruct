@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::fmt::Display;
+use std::fmt::{Display, Formatter, Result as DisplayResult};
 use std::io::Error as StdError;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -44,8 +44,12 @@ pub enum ParserError {
     /// Occurs when there is a type mismatch in a field within the configuration
     /// file. This happens when a field's value type does not match the
     /// expected type.
-    #[error("Type mismatch in field '{field}', expected {expected}")]
-    TypeMismatch { field: String, expected: String },
+    #[error("Type mismatch in field '{field}': expected {expected}, found '{found}'")]
+    TypeMismatch {
+        field: String,
+        expected: String,
+        found: String,
+    },
 
     /// Raised when a file path lacks an extension.
     /// Without an extension, determining the file format becomes impossible.
@@ -150,6 +154,34 @@ pub enum ConfigValue {
     Array(Vec<ConfigValue>),
 }
 
+// Implement `Display` trait for `ConfigValue` to allow easy conversion to
+// string.
+//
+// This implementation formats the `ConfigValue` in a human-readable way,
+// including sections and arrays. So that it can be used in the error messages.
+impl Display for ConfigValue {
+    fn fmt(&self, f: &mut Formatter<'_>) -> DisplayResult {
+        match self {
+            ConfigValue::Value(s) => write!(f, "{}", s),
+            ConfigValue::Null => write!(f, "null"),
+            ConfigValue::Section(map) => {
+                let entries: Vec<String> = map
+                    .iter()
+                    .map(|(k, v)| format!("{}: {}", k, v))
+                    .collect();
+                write!(f, "{{{}}}", entries.join(", "))
+            },
+            ConfigValue::Array(arr) => {
+                let items: Vec<String> = arr
+                    .iter()
+                    .map(|v| v.to_string())
+                    .collect();
+                write!(f, "[{}]", items.join(", "))
+            },
+        }
+    }
+}
+
 /// Trait defining the interface for parsers.
 /// Parsers must be thread-safe (`Send + Sync`).
 pub trait Parser: Send + Sync {
@@ -222,9 +254,11 @@ macro_rules! impl_from_config_value {
             fn from_config_value(value: &ConfigValue) -> Result<Self, ParserError> {
                 match value {
                     ConfigValue::Value(s) => parse_value::<$t>(s),
+                    ConfigValue::Null => Ok(Default::default()),
                     _ => Err(ParserError::TypeMismatch {
                         field: "Expected a scalar value".into(),
                         expected: stringify!($t).into(),
+                        found: value.to_string()
                     }),
                 }
             }
@@ -239,6 +273,7 @@ fn parse_value<T: FromStr>(s: &str) -> Result<T, ParserError> {
         .map_err(|_| ParserError::TypeMismatch {
             field: s.to_string(),
             expected: std::any::type_name::<T>().to_string(),
+            found: s.to_string(),
         })
 }
 
@@ -258,15 +293,17 @@ where
                 .iter()
                 .enumerate()
                 .map(|(i, item)| {
-                    T::from_config_value(item).map_err(|e| ParserError::NestedError {
-                        section: format!("[{}]", i),
-                        source: Box::new(e),
+                    T::from_config_value(item).map_err(|_e| ParserError::TypeMismatch {
+                        field: format!("Array item at index {}", i),
+                        expected: std::any::type_name::<T>().to_string(),
+                        found: item.to_string(),
                     })
                 })
                 .collect(),
             _ => Err(ParserError::TypeMismatch {
                 field: "".into(),
                 expected: "array".into(),
+                found: value.to_string(),
             }),
         }
     }

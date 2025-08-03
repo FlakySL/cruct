@@ -22,6 +22,9 @@ pub struct FieldParams {
     /// A default value for the field.
     pub default: Option<Expr>,
 
+    /// Whether the field is optional, meaning it can be omitted
+    pub optional: bool,
+
     /// An argument override for the field, used to set the value
     pub arg_override: Option<String>,
 }
@@ -35,6 +38,7 @@ impl Parse for FieldParams {
         let mut insensitive = None;
         let mut env_override = None;
         let mut arg_override = None;
+        let mut optional = false;
 
         for param in params {
             let key = param
@@ -59,11 +63,18 @@ impl Parse for FieldParams {
                     arg_override = Some(value.value());
                 },
 
+                ("optional", Expr::Lit(ExprLit { lit: Lit::Bool(value), .. })) => {
+                    optional = value.value();
+                },
+
                 ("default", value) => {
                     default = Some(value.clone());
                 },
 
-                (name @ ("name" | "insensitive" | "env_override" | "arg_override"), value) => {
+                (
+                    name @ ("name" | "insensitive" | "env_override" | "arg_override" | "optional"),
+                    value,
+                ) => {
                     Err(SynError::new_spanned(
                         value,
                         format!(
@@ -74,6 +85,7 @@ impl Parse for FieldParams {
                                 "insensitive" => "bool",
                                 "arg_override" => "&str",
                                 "env_override" => "&str",
+                                "optional" => "bool",
 
                                 &_ => panic!(
                                     "Technically, you should not be able to see this error, but \
@@ -89,7 +101,8 @@ impl Parse for FieldParams {
                     param,
                     format!(
                         "Unknown parameter '{name}'. Known parameters include:\n- name: &str\n- \
-                         insensitive: bool\n- env_override: &str"
+                         insensitive: bool\n- env_override: &str\n- arg_override: &str\n- \
+                         optional: bool"
                     ),
                 ))?,
             }
@@ -101,6 +114,7 @@ impl Parse for FieldParams {
             env_override,
             arg_override,
             default,
+            optional,
         })
     }
 }

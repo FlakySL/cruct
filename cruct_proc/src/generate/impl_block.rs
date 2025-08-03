@@ -127,6 +127,7 @@ pub fn generate_impl_block(
                         return Err(ParserError::TypeMismatch {
                             field: "root".into(),
                             expected: "section".into(),
+                            found: config.to_string(),
                         })
                     }
                 };

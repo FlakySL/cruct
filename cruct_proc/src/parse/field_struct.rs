@@ -64,19 +64,12 @@ impl StructField {
     }
 }
 
-/// Check if the attribute's path is identified as "env_override",
-/// "arg_override", "name", "insensitive", "default" and "description"
-/// - "env_override" is used to override the field value from an environment
-///   variable
-/// - "arg_override" is used to override the field value from a command line
-/// - "name" is used to specify the name of the field in the configuration file
-/// - insensitive" is used to specify if the field name should be treated as
-///   case-insensitive
-/// - description" is a metadata attribute that provides a description of the
-///   field
+/// Checks if an attribute is a field attribute.
+///
+/// * `attr`: A reference to an `syn::atr::Attribute` to check.
 fn is_field_attr(attr: &Attribute) -> bool {
-    let allowed_attrs =
-        ["env_override", "arg_override", "name", "insensitive", "default", "description", "field"];
+    // TODO: use description attribute for metadata purposes
+    let allowed_attrs = ["field", "description"];
 
     attr.path()
         .get_ident()

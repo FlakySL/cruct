@@ -31,6 +31,7 @@ fn test_error_propagation_for_non_missing_error() {
             Err(ParserError::TypeMismatch {
                 field: "x".into(),
                 expected: "u32".into(),
+                found: "wrong".into(),
             })
         }
     }

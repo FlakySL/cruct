@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Ident, Type, TypePath};
+use syn::{Error as SynError, Ident, Type, TypePath};
 
 use crate::parse::FieldParams;
 
@@ -14,11 +14,20 @@ pub fn generate_field_initialization(
     config_key: &str,
     field_type: &Type,
 ) -> TokenStream {
+    // Compile-time checks for field parameters
+    if let Err(e) = compile_check(field, field_ident) {
+        return e.to_compile_error();
+    }
+
     let override_chain = build_override_chain(field);
     let config_lookup = build_config_lookup(field, config_key);
     let is_scalar = is_scalar_type(field_type);
 
-    let parse_logic = if let Some(default_val) = &field.default {
+    // TODO: clean this mess
+
+    let parse_logic = if field.optional {
+        parse_optional(field_type, config_key, &override_chain, &config_lookup)
+    } else if let Some(default_val) = &field.default {
         parse_with_default(field_type, config_key, default_val, &override_chain, &config_lookup)
     } else if is_scalar {
         parse_scalar(field_type, config_key, &override_chain, &config_lookup)
@@ -124,13 +133,43 @@ fn parse_with_default(
             let maybe = #override_chain.or_else(|| #config_lookup);
             if let Some(val) = maybe {
                 <#ty as ::cruct::FromConfigValue>::from_config_value(&val)
-                    .map_err(|e| ::cruct::parser::ParserError::NestedError {
-                        section: #key.to_string(), source: Box::new(e)
+                    .map_err(|e| ::cruct::parser::ParserError::TypeMismatch {
+                        field: #key.to_string(),
+                        expected: stringify!(#ty).into(),
+                        found: val.to_string()
                     })?
             } else {
                 let sec = ::cruct::ConfigValue::Section(map.clone());
                 <#ty as ::cruct::FromConfigValue>::from_config_value(&sec)
                     .unwrap_or(#default_val)
+            }
+        }
+    }
+}
+
+/// Generates parsing logic for optional fields.
+///
+/// If the field is not present in the overrides or config,
+/// it returns `None`.
+fn parse_optional(
+    ty: &Type,
+    key: &str,
+    override_chain: &TokenStream,
+    config_lookup: &TokenStream,
+) -> TokenStream {
+    quote! {
+        {
+            let maybe = #override_chain.or_else(|| #config_lookup);
+            if maybe.is_none() {
+                None
+            } else {
+                let maybe = maybe.unwrap();
+                <#ty as ::cruct::FromConfigValue>::from_config_value(&maybe)
+                    .map_err(|e| ::cruct::parser::ParserError::TypeMismatch {
+                        field: #key.to_string(),
+                        expected: ::std::any::type_name::<#ty>().to_string(),
+                        found: maybe.to_string()
+                    })?
             }
         }
     }
@@ -150,7 +189,9 @@ fn parse_scalar(
             if let Some(val) = maybe {
                 <#ty as ::cruct::FromConfigValue>::from_config_value(&val)
                     .map_err(|_| ::cruct::parser::ParserError::TypeMismatch {
-                        field: #key.to_string(), expected: stringify!(#ty).into()
+                        field: #key.to_string(),
+                        expected: stringify!(#ty).into(),
+                        found: val.to_string()
                     })?
             } else {
                 return Err(::cruct::parser::ParserError::MissingField(
@@ -186,4 +227,23 @@ fn parse_nested(
             }
         }
     }
+}
+
+/// Performs compile-time checks on field parameters to ensure they are valid.
+///
+/// * `field`: The field parameters to check.
+/// * `field_ident`: The identifier of the field, used for error reporting.
+fn compile_check(field: &FieldParams, field_ident: &Ident) -> Result<(), syn::Error> {
+    if field.optional
+        && field
+            .default
+            .is_some()
+    {
+        return Err(SynError::new_spanned(
+            field_ident,
+            format!("Field `{}` cannot be both optional and have a default value.", field_ident),
+        ));
+    }
+
+    Ok(())
 }

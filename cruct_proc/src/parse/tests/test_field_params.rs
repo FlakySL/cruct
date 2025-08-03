@@ -60,7 +60,7 @@ fn unknown_key() {
         assert_eq!(
             e.to_string(),
             "Unknown parameter 'unknown'. Known parameters include:\n- name: &str\n- insensitive: \
-             bool\n- env_override: &str"
+             bool\n- env_override: &str\n- arg_override: &str\n- optional: bool"
                 .to_string()
         );
     }

@@ -22,6 +22,7 @@ impl Parser for YmlParser {
             .ok_or(ParserError::TypeMismatch {
                 field: "document".to_string(),
                 expected: "non-empty YAML document".to_string(),
+                found: "empty document".to_string(),
             })?;
 
         parse_yaml_value(doc.clone())
@@ -69,6 +70,9 @@ fn parse_yaml_value(value: Yaml) -> Result<ConfigValue, ParserError> {
         _ => Err(ParserError::TypeMismatch {
             field: "YAML value".to_string(),
             expected: "supported YAML type".to_string(),
+            found: value
+                .into_string()
+                .unwrap_or("unknown".to_string()),
         }),
     }
 }

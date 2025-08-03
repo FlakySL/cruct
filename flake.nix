@@ -44,6 +44,7 @@
             llvmPackages_19.libllvm
             grcov
             cargo-nextest
+            cargo-expand
           ];
 
           env = {

@@ -59,7 +59,8 @@ fn flat_nested_type_mismatch() {
     if let Err(e) = result {
         assert_eq!(
             e.to_string(),
-            "Nested configuration error in nested: Type mismatch in field 'value', expected u32"
+            "Nested configuration error in nested: Type mismatch in field 'value': expected u32, \
+             found 'not_a_number'"
         );
     }
 }

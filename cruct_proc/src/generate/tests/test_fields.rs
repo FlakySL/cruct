@@ -11,6 +11,7 @@ fn default_value_generates_correct_initialization() {
         insensitive: false,
         default: Some(parse_str("42").unwrap()),
         arg_override: None,
+        optional: false,
     };
     let ident: Ident = parse_quote! { bar };
     let ty: Type = parse_quote! { u32 };
@@ -27,6 +28,7 @@ fn arg_override_generates_correct_lookup() {
         insensitive: false,
         default: None,
         arg_override: Some("foo".into()),
+        optional: false,
     };
     let ident: Ident = parse_quote! { foo };
     let ty: Type = parse_quote! { String };
