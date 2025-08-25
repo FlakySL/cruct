@@ -21,4 +21,4 @@ cruct_shared = { version = "=1.0.0", path = "../cruct_shared" }
 
 [dev-dependencies]
 assay = "0.1.1"
-tempfile = "3.19.1"
+tempfile = "3.21.0"
