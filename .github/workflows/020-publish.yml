@@ -1,0 +1,155 @@
+# This action will keep track of the current crate verision, the last
+# pushed git tag and determine whether the project should be deployed
+#
+# Additionally it will keep track whether THE LAST TAG has a release
+# assigned, if it doesn't unless otherwise specified it will attempt
+# to create one.
+
+name: publish
+
+on:
+  workflow_run:
+    workflows:
+      - tests
+    types:
+      - completed
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # This only runs on main after tests have concluded successfully.
+    if: github.ref == 'refs/heads/main' && github.event.workflow_run.conclusion == 'success'
+    env:
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: write
+
+    steps:
+        # Need to checkout the repository before
+        # using composite action to setup.
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+
+        # Setup the environment with default
+        # programs and setup required packages.
+      - name: Setup Environment
+        uses: ./.github/actions/setup
+        with:
+          npm-packages: "semver"
+
+
+        # Parsing all the previous versions
+        # is essential to determining whether a new
+        # version should be published.
+        #
+        # This exports the crate version and the
+        # latest git tag which help determine whether
+        # a new version should be published.
+      - name: Get And Parse Repository Versions
+        id: versions
+        run: |
+          # The version of the main crate which should be the first on the list in the workspace config.
+          echo "crate_version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')" \
+            >> $GITHUB_OUTPUT;
+
+          # The last pushed git tag if any.
+          last_git_tag="$(git describe --tags --abbrev=0 || echo '')";
+          if [[ -z "$last_git_tag" ]]; then exit 0; fi;
+          echo "last_tag=$last_git_tag" >> $GITHUB_OUTPUT;
+
+
+        # In the case the last git tag is minor than
+        # the current crate version, determine that
+        # a new version should be published to crates.io.
+        #
+        # In the case the last git tag doesn't have
+        # a release associated to it, determine a release
+        # should be created with git cliff.
+      - name: Determine What Should Be Done
+        id: to_do
+        run: |
+          crate_version="${{ steps.versions.outputs.crate_version }}";
+          last_tag="${{ steps.versions.outputs.last_tag }}";
+
+          # If there is no last tag, make up 0.0.0.
+          if [ -z "$last_tag" ]; then
+            last_tag="0.0.0"
+          fi
+
+          # If the last published tag is minor than the crate's tag
+          # determine that the crate should be published.
+          if semver -r "> $last_tag" "$crate_version"; then
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          fi
+
+          # If there is no release associated to the last tag
+          # determine that a release should be created.
+          if ! gh release view "$last_tag" >/dev/null 2>&1; then
+            echo "should_release=true" >> $GITHUB_OUTPUT;
+          else
+            echo "should_release=false" >> $GITHUB_OUTPUT;
+          fi
+
+
+        # In the case it's determined that the crate should be
+        # published, then we call cargo publish and create
+        # a new tag for the publication in the case the publication
+        # succeeded.
+      - name: Publish And Create A New Tag
+        id: publish
+        if: success() && steps.to_do.outputs.should_publish == 'true'
+        run: |
+          crate_version="${{ steps.versions.outputs.crate_version }}"
+
+          # If cargo publish fails a new release won't be made.
+          # Make sure that it exits in case github actions doesn't halt.
+          cargo publish || exit 1;
+
+          git tag "$crate_version";
+          git push origin "$crate_version";
+
+          # We make a version override for which the changelog
+          # will be created instead.
+          echo "version_override=$crate_version" >> $GITHUB_OUTPUT;
+
+
+        # In the case that or either it's determined that
+        # a release should be created or a new publication
+        # is done, then we call git-cliff-action@v4 to process
+        # creating a changelog.
+      - name: Generate a changelog
+        uses: orhun/git-cliff-action@v4
+        if: >
+          success() && (
+            steps.to_do.outputs.should_release == 'true' ||
+            steps.publish.outputs.version_override != ''
+          )
+        id: git-cliff
+        with:
+          config: cliff.toml
+          args: --verbose --latest --strip header
+
+
+        # We call create-release@v1 in the case the same
+        # condition as generating a changelog succeeds.
+      - name: Create Release
+        uses: actions/create-release@v1
+        if: >
+          success() && (
+            steps.to_do.outputs.should_release == 'true' ||
+            steps.publish.outputs.version_override != ''
+          )
+        with:
+          tag_name: ${{ steps.versions.outputs.last_tag }}
+          release_name: Release ${{ steps.versions.outputs.crate_version }}
+          body: ${{ steps.git-cliff.outputs.content }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

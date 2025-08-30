@@ -1,0 +1,104 @@
+# This workflow decides whether a new version should be published,
+# basically by running tests, lints and version checks to ensure
+# everything is as it should be.
+#
+# This will fail in case
+# - Any of the past commits don't follow the conventional commits standard.
+# - Cargo Clippy reports a broken rule.
+# - Cargo Fmt reports a broken rule.
+# - Tests fail
+# - Code coverage reports < 80% coverage.
+#
+# For now this only runs on main and on linux, since this is a library,
+# once further standards are enforced this might change.
+
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+
+    steps:
+        # Need to checkout the repository before
+        # using composite action to setup.
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+
+        # Setup the environment with default
+        # programs and setup required packages.
+      - name: Setup Environment
+        uses: ./.github/actions/setup
+        with:
+          rust-toolchain: nightly
+          rust-components: llvm-tools-preview rustfmt clippy
+          rust-packages: cargo-llvm-cov
+
+
+        # Validate conventional commits from the
+        # current branch.
+      - name: Conventional Commit Validation
+        uses: webiny/action-conventional-commits@v1.3.0
+        with:
+          allowed-commit-types: "feat,fix,docs,test,ci,refactor,perf,chore,revert"
+
+
+        # Run code lints and tests
+      - name: Run Code Lint Checks And Tests
+        run: |
+          make test-code;
+          make test-format;
+          make test-clippy;
+
+
+        # Generate code coverage, this only
+        # happens in main because its the only
+        # branch we consideer for coverage.
+      - name: Generate Code Coverage
+        if: success() && github.ref == 'refs/heads/main'
+        run: make test-coverage-export;
+
+
+        # Upload the coverage to codecov
+        # Only main is considered because
+        # codecov is known to fail on other
+        # branches due to branch protection
+        # rules.
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        if: success() && github.ref == 'refs/heads/main'
+        with:
+          file: coverage.lcov
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: FlakySL/actix_failwrap
+          verbose: true
+
+
+        # This is more relevant while merging.
+        # Since by merge rules we deny failed
+        # workflows, in the case where coverage is
+        # below 80% the workflow will fail thus
+        # The branch won't be able to be merged.
+      - name: Fail if overall coverage is below 80%
+        run: |
+          coverage=$(make test-coverage-get);
+          coverage=${coverage//[[:space:]};
+          coverage=${coverage%.*}
+          if (( coverage < 80 ))
+          then
+            echo "❌ Coverage is below 80% ($coverage%)"
+            exit 1
+          else
+            echo "✅ Coverage meets requirement ($coverage%)"
+          fi
