@@ -1,0 +1,63 @@
+# This private action setups all the necessary to run on all the workflows.
+#
+# By default it installs rust considering the input 'rust-toolchain' to choose
+# which toolchain to install, then installs all the required rust packages.
+#
+# If there is an npm package specified then it also installs node along
+# the required packages.
+
+name: Setup Environment
+
+inputs:
+  rust-toolchain:
+    required: false
+    default: stable
+  rust-components:
+    required: false
+    default: ""
+  rust-packages:
+    required: false
+    default: ""
+  npm-packages:
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: "22.18.0"
+
+
+    - name: Configure GIT
+      shell: bash
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: ${{ inputs.rust-toolchain }}
+        components: ${{ inputs.rust-components }}
+
+
+    - name: Set Rust Bin Environment Variable
+      shell: bash
+      run: echo "PATH=$HOME/.cargo/bin:$PATH" >> $GITHUB_ENV
+
+
+    - uses: cargo-bins/cargo-binstall@main
+    - name: Install Rust Packages
+      if: ${{ inputs.rust-packages != '' }}
+      shell: bash
+      run: cargo binstall --force -y ${{ inputs.rust-packages }}
+
+
+    - name: Install NPM Packages
+      if: ${{ inputs.npm-packages != '' }}
+      shell: bash
+      run: npm install -g ${{ inputs.npm-packages }}
