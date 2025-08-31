@@ -15,7 +15,7 @@ toml = ["dep:toml_edit"]
 json = ["dep:yaml-rust2"]
 
 [dependencies]
-thiserror = "2.0.12"
+thiserror = "2.0.16"
 
 # Parsers
 jzon = { version = "0.12.5", optional = true }
